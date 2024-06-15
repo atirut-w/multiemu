@@ -5,8 +5,6 @@
 struct Board
 {
     virtual ~Board() = default;
-
-    std::string description;
 };
 
 struct BoardMeta
