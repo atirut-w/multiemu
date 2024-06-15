@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
     unique_ptr<Board> board;
     try
     {
-        board = BoardRegistry::get_board(args->get<string>("--board")).ctor();
+        board = BoardRegistry::get_board(args->get<string>("--board")).ctor_wrapper();
     }
     catch (const invalid_argument &error)
     {

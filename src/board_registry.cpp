@@ -17,7 +17,7 @@ vector<BoardMeta> BoardRegistry::get_boards()
     
     while (board < &__stop_boards)
     {
-        if (board->ctor)
+        if (board->ctor_wrapper)
         {
             boards.push_back(*board);
         }
@@ -33,7 +33,7 @@ BoardMeta BoardRegistry::get_board(const string &name)
     
     while (board < &__stop_boards)
     {
-        if (board->name == name && board->ctor)
+        if (board->name == name && board->ctor_wrapper)
         {
             return *board;
         }
