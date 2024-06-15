@@ -7,32 +7,13 @@
 using namespace std;
 using namespace argparse;
 
-struct MyBoard : public Board
-{
-};
-
-unique_ptr<Board> my_board_ctor()
-{
-    
-    return make_unique<MyBoard>();
-}
-
-struct MyOtherBoard : public Board
-{
-};
-
-unique_ptr<Board> my_other_board_ctor()
-{
-    
-    return make_unique<MyOtherBoard>();
-}
-
-REGISTER_BOARD(MyBoard, my_board_ctor);
-REGISTER_BOARD(MyOtherBoard, my_other_board_ctor);
-
 unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[])
 {
     auto parser = make_unique<ArgumentParser>("Multi-machine emulator");
+
+    parser->add_argument("-b", "--board")
+        .help("Board to emulate")
+        .required();
 
     try
     {
@@ -51,9 +32,19 @@ int main(int argc, const char *argv[])
 {
     auto args = parse_arguments(argc, argv);
     
+    unique_ptr<Board> board;
     for (auto &meta : BoardRegistry::get_boards())
     {
-        cout << meta.name << endl;
+        if (meta.name == args->get<string>("--board"))
+        {
+            board = meta.ctor();
+            break;
+        }
+    }
+    if (!board)
+    {
+        cerr << "Could not find board \"" << args->get<string>("--board") << "\"" << endl;
+        exit(1);
     }
 
     return 0;
