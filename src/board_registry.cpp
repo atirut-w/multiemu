@@ -3,8 +3,8 @@
 
 using namespace std;
 
-extern "C" BoardMeta __start_boards;
-extern "C" BoardMeta __stop_boards;
+extern BoardMeta __start_boards;
+extern BoardMeta __stop_boards;
 
 // Dummy board to prevent the linker from optimizing out the section
 REGISTER_BOARD(DummyBoard, nullptr);
