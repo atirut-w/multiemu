@@ -1,9 +1,34 @@
 #include <iostream>
 #include <argparse/argparse.hpp>
 #include <memory>
+#include <board.hpp>
+#include <board_registry.hpp>
 
 using namespace std;
 using namespace argparse;
+
+struct MyBoard : public Board
+{
+};
+
+Board *my_board_ctor()
+{
+    
+    return new MyBoard();
+}
+
+struct MyOtherBoard : public Board
+{
+};
+
+Board *my_other_board_ctor()
+{
+    
+    return new MyOtherBoard();
+}
+
+REGISTER_BOARD(MyBoard, my_board_ctor);
+REGISTER_BOARD(MyOtherBoard, my_other_board_ctor);
 
 unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[])
 {
@@ -25,6 +50,11 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[])
 int main(int argc, const char *argv[])
 {
     auto args = parse_arguments(argc, argv);
+    
+    for (auto &meta : BoardRegistry::get_boards())
+    {
+        cout << meta.name << endl;
+    }
 
     return 0;
 }

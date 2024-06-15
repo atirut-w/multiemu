@@ -1,0 +1,27 @@
+#include <board_registry.hpp>
+#include <cstddef>
+
+using namespace std;
+
+extern "C" BoardMeta __start_boards;
+extern "C" BoardMeta __stop_boards;
+
+// Dummy board to prevent the linker from optimizing out the section
+REGISTER_BOARD(DummyBoard, nullptr);
+
+vector<BoardMeta> BoardRegistry::get_boards()
+{
+    vector<BoardMeta> boards;
+    BoardMeta *board = &__start_boards;
+    
+    while (board < &__stop_boards)
+    {
+        if (board->ctor)
+        {
+            boards.push_back(*board);
+        }
+        board++;
+    }
+
+    return boards;
+}
