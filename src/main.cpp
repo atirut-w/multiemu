@@ -33,17 +33,13 @@ int main(int argc, const char *argv[])
     auto args = parse_arguments(argc, argv);
     
     unique_ptr<Board> board;
-    for (auto &meta : BoardRegistry::get_boards())
+    try
     {
-        if (meta.name == args->get<string>("--board"))
-        {
-            board = meta.ctor();
-            break;
-        }
+        board = BoardRegistry::get_board(args->get<string>("--board")).ctor();
     }
-    if (!board)
+    catch (const invalid_argument &error)
     {
-        cerr << "Could not find board \"" << args->get<string>("--board") << "\"" << endl;
+        cerr << error.what() << endl;
         exit(1);
     }
 
