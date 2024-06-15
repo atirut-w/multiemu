@@ -11,20 +11,20 @@ struct MyBoard : public Board
 {
 };
 
-Board *my_board_ctor()
+unique_ptr<Board> my_board_ctor()
 {
     
-    return new MyBoard();
+    return make_unique<MyBoard>();
 }
 
 struct MyOtherBoard : public Board
 {
 };
 
-Board *my_other_board_ctor()
+unique_ptr<Board> my_other_board_ctor()
 {
     
-    return new MyOtherBoard();
+    return make_unique<MyOtherBoard>();
 }
 
 REGISTER_BOARD(MyBoard, my_board_ctor);
