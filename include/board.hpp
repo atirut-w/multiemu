@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <cpu.hpp>
 
 struct Board
 {
     virtual ~Board() = default;
+
+    std::unique_ptr<CPU> cpu;
 };
 
 // Dev note: Please do not put anything that modifies itself in board meta, as it will be placed in a read-only section
