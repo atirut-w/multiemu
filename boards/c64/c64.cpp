@@ -10,7 +10,7 @@ C64::C64()
     cpu->read = [this](uint16_t addr) -> uint8_t
     {
         cout << "Reading from " << hex << addr << endl;
-        return 0;
+        return 0xea; // NOP
     };
     cpu->write = [this](uint16_t addr, uint8_t data)
     {

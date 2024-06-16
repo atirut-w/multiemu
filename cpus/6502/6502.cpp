@@ -1,5 +1,10 @@
 #include <6502/6502.hpp>
 
+uint8_t MOS6502::fetch()
+{
+    return read(pc++);
+}
+
 void MOS6502::run_instruction()
 {
     if (resetting)
@@ -8,7 +13,7 @@ void MOS6502::run_instruction()
         resetting = false;
     }
 
-    uint8_t opcode = read(pc++);
+    uint8_t opcode = fetch();
     uint8_t opcode_hi = opcode >> 4;
     uint8_t opcode_lo = opcode & 0xf;
 

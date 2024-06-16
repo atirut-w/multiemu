@@ -8,5 +8,6 @@ struct MOS6502 : public CPU
     uint16_t pc;
     bool resetting = true;
 
+    uint8_t fetch();
     void run_instruction() override;
 };
