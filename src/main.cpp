@@ -31,11 +31,11 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[])
 int main(int argc, const char *argv[])
 {
     auto args = parse_arguments(argc, argv);
-    
+
     unique_ptr<Board> board;
     try
     {
-        board = BoardRegistry::get_board(args->get<string>("--board")).ctor_wrapper();
+        board = BoardRegistry::get_board(args->get<string>("--board"));
     }
     catch (const invalid_argument &error)
     {

@@ -6,6 +6,6 @@
 
 namespace BoardRegistry
 {
-    std::vector<BoardMeta> get_boards();
-    BoardMeta get_board(const std::string &name);
+    std::vector<const BoardMeta *> get_board_metas();
+    std::unique_ptr<Board> get_board(const std::string &name);
 }

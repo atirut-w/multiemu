@@ -1,25 +1,26 @@
 #include <board_registry.hpp>
 #include <cstddef>
 #include <stdexcept>
+#include <iostream>
 
 using namespace std;
 
-extern BoardMeta __start_boards;
-extern BoardMeta __stop_boards;
+extern const BoardMeta __start_boards;
+extern const BoardMeta __stop_boards;
 
 // Dummy board to prevent the linker from optimizing out the section
 REGISTER_BOARD(DummyBoard, nullptr);
 
-vector<BoardMeta> BoardRegistry::get_boards()
+vector<const BoardMeta *> BoardRegistry::get_board_metas()
 {
-    vector<BoardMeta> boards;
-    BoardMeta *board = &__start_boards;
+    vector<const BoardMeta *> boards;
+    const BoardMeta *board = &__start_boards;
     
     while (board < &__stop_boards)
     {
         if (board->ctor_wrapper)
         {
-            boards.push_back(*board);
+            boards.push_back(board);
         }
         board++;
     }
@@ -27,17 +28,18 @@ vector<BoardMeta> BoardRegistry::get_boards()
     return boards;
 }
 
-BoardMeta BoardRegistry::get_board(const string &name)
+unique_ptr<Board> BoardRegistry::get_board(const string &name)
 {
-    BoardMeta *board = &__start_boards;
+    const BoardMeta *board = &__start_boards;
     
     while (board < &__stop_boards)
     {
         if (board->name == name && board->ctor_wrapper)
         {
-            return *board;
+            cout << "Instantiating board \"" << name << "\"" << endl;
+            return board->ctor_wrapper();
         }
         board++;
     }
-    throw invalid_argument("Could not find board \"" + name + "\"");
+    throw runtime_error("Board \"" + name + "\" not found");
 }
