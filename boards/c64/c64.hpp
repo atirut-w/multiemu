@@ -3,6 +3,7 @@
 
 struct C64 : Board
 {
+    C64();
 };
 
 std::unique_ptr<Board> c64_ctor_wrap()
