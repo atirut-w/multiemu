@@ -41,5 +41,5 @@ unique_ptr<Board> BoardRegistry::get_board(const string &name)
         }
         board++;
     }
-    throw runtime_error("Board \"" + name + "\" not found");
+    throw invalid_argument("Board \"" + name + "\" not found");
 }
