@@ -11,7 +11,7 @@ extern const BoardMeta __stop_boards;
 // Dummy board to prevent the linker from optimizing out the section
 REGISTER_BOARD(DummyBoard, nullptr);
 
-vector<const BoardMeta *> BoardRegistry::get_board_metas()
+const vector<const BoardMeta *> BoardRegistry::get_board_metas()
 {
     vector<const BoardMeta *> boards;
     const BoardMeta *board = &__start_boards;
