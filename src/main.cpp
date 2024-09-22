@@ -16,12 +16,15 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
   } catch (const exception &error) {
     cerr << error.what() << endl;
     cerr << *parser;
-    exit(1);
+    return nullptr;
   }
 }
 
 int main(int argc, const char *argv[]) {
   auto args = parse_arguments(argc, argv);
+  if (!args) {
+    return 1;
+  }
 
   return 0;
 }
