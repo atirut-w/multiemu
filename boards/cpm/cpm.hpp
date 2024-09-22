@@ -2,5 +2,5 @@
 #include "multiemu/board.hpp"
 
 struct CPMBoard : Board {
-  virtual ~CPMBoard();
+  virtual int step() override;
 };
