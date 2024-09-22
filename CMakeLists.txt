@@ -4,8 +4,6 @@ add_subdirectory("3rd/argparse")
 
 add_executable("multiemu"
     "src/main.cpp"
-    "src/board_registry.cpp"
-    "src/cpu.cpp"
 )
 target_include_directories("multiemu" PRIVATE "include" "boards" "cpus")
 target_link_libraries("multiemu" PRIVATE "argparse")

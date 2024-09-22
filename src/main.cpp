@@ -1,6 +1,4 @@
 #include <argparse/argparse.hpp>
-#include <board.hpp>
-#include <board_registry.hpp>
 #include <iostream>
 #include <memory>
 
@@ -24,18 +22,6 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
 
 int main(int argc, const char *argv[]) {
   auto args = parse_arguments(argc, argv);
-
-  unique_ptr<Board> board;
-  try {
-    board = BoardRegistry::get_board(args->get<string>("--board"));
-  } catch (const invalid_argument &error) {
-    cerr << error.what() << endl;
-    exit(1);
-  }
-
-  while (1) {
-    board->cpu->run_instruction();
-  }
 
   return 0;
 }
