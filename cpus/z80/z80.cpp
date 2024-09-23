@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 
@@ -16,6 +17,13 @@ Wrapped::Z80 *get_cpu(void *cpu) {
 
 Z80 *get_self(void *self) {
   return static_cast<Z80 *>(self);
+}
+
+uint8_t fetch_opw(void *ctx, uint16_t address) {
+  uint8_t opcode = get_self(ctx)->read(address);
+  if (get_self(ctx)->traps.count(opcode))
+    return get_self(ctx)->traps[opcode](address);
+  return get_self(ctx)->read(address);
 }
 
 uint8_t readw(void *ctx, uint16_t address) {
@@ -38,7 +46,7 @@ Z80::Z80() {
   Wrapped::Z80 *cpu = new Wrapped::Z80();
   cpu->context = this;
 
-  cpu->fetch_opcode = readw;
+  cpu->fetch_opcode = fetch_opw;
   cpu->fetch = readw;
   cpu->read = readw;
   cpu->write = writew;
@@ -54,4 +62,8 @@ Z80::~Z80() {
 
 int Z80::step() {
   return Wrapped::z80_run(get_cpu(real_cpu), 1);
+}
+
+void Z80::set_trap(size_t opcode, function<size_t(size_t)> handler) {
+  traps[opcode] = handler;
 }

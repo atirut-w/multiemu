@@ -16,6 +16,11 @@ CPMBoard::CPMBoard() {
   cpu.write = [this](size_t address, uint8_t value) {
     memory[address] = value;
   };
+
+  cpu.set_trap(0, [this](std::size_t addr) {
+    cout << "Trap 0 at " << addr << endl;
+    return 0;
+  });
 }
 
 int CPMBoard::step() {
