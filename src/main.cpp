@@ -8,15 +8,15 @@ using namespace std;
 using namespace argparse;
 
 unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
-  auto parser = make_unique<ArgumentParser>("Multi-machine emulator");
+  auto parser = make_unique<ArgumentParser>("multiemu");
 
   auto &mutex = parser->add_mutually_exclusive_group(true);
 
   // Board to emulate
-  mutex.add_argument("board").help("Board to emulate").nargs(1);
+  mutex.add_argument("-b", "--board").help("Board to emulate");
 
   // List available boards
-  mutex.add_argument("-l", "--list").help("List available boards").default_value(false).implicit_value(true);
+  mutex.add_argument("-l", "--list").help("List available boards").flag();
 
   try {
     parser->parse_args(argc, argv);
