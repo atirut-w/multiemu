@@ -60,8 +60,8 @@ Z80::~Z80() {
   delete static_cast<Wrapped::Z80 *>(real_cpu);
 }
 
-int Z80::step() {
-  return Wrapped::z80_run(get_cpu(real_cpu), 1);
+int Z80::run(int cycles) {
+  return Wrapped::z80_run(get_cpu(real_cpu), cycles);
 }
 
 void Z80::set_trap(size_t opcode, function<size_t(size_t)> handler) {

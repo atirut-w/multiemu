@@ -11,6 +11,6 @@ struct CPU {
   ReadCallback read = [](size_t) { return 0; };
   WriteCallback write = [](size_t, uint8_t) {};
 
-  virtual int step() = 0;
+  virtual int run(int cycles) = 0;
   virtual void set_trap(size_t opcode, std::function<size_t(size_t)> handler) {}
 };

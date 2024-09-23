@@ -43,7 +43,7 @@ CPMBoard::CPMBoard() {
 
 int CPMBoard::step() {
   if (running) {
-    return cpu.step();
+    return cpu.run(1);
   } else {
     return 0;
   }
