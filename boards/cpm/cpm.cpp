@@ -5,6 +5,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
 
 using namespace std;
@@ -26,7 +27,25 @@ CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }
 Z80 *get_cpu(void *cpu) { return static_cast<Z80 *>(cpu); }
 
 uint8_t fetch_opcode(void *ctx, uint16_t address) {
-  // TODO: Trap BDOS calls
+  if (address == 5) {
+    auto self = get_self(ctx);
+    auto cpu = get_cpu(self->cpu);
+    uint8_t syscall = cpu->bc.uint8_array[0];
+
+    switch (syscall) {
+    default:
+      cout << "Unknown syscall: " << (int)syscall << endl;
+      break;
+    case 0:
+      self->running = false;
+      break;
+    case 2:
+      cout << (char)cpu->de.uint8_array[0];
+      break;
+    }
+
+    return 0xc9;
+  }
   return static_cast<CPMBoard *>(ctx)->memory[address];
 }
 
