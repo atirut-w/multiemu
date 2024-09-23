@@ -1,12 +1,13 @@
 #include "cpm.hpp"
 #include "argparse/argparse.hpp"
-#include <Z80.h>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <z80.hpp>
 
 using namespace std;
 using namespace argparse;
@@ -24,29 +25,34 @@ unique_ptr<Board> create_cpm(const ArgumentParser &args) {
 
 CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }
 
-Z80 *get_cpu(void *cpu) { return static_cast<Z80 *>(cpu); }
+void call_handler(void *ctx) {
+  auto board = get_self(ctx);
+  auto &cpu = board->cpu;
 
-uint8_t fetch_opcode(void *ctx, uint16_t address) {
-  if (address == 5) {
-    auto self = get_self(ctx);
-    auto cpu = get_cpu(self->cpu);
-    uint8_t syscall = cpu->bc.uint8_array[0];
+  if (cpu.reg.PC == 5)
+  {
+    uint8_t syscall = cpu.reg.pair.C;
+    board->memory[5] = 0xc9;
 
-    switch (syscall) {
+    switch (syscall)
+    {
     default:
-      cout << "Unknown syscall: " << (int)syscall << endl;
+      cout << "Unknown syscall: " << static_cast<int>(syscall) << "\n";
+      // "Dump it"
+      cout << "Registers:\n";
+      printf("AF: %04x\n", (cpu.reg.pair.A << 8) | cpu.reg.pair.F);
+      printf("BC: %04x\n", (cpu.reg.pair.B << 8) | cpu.reg.pair.C);
+      printf("DE: %04x\n", (cpu.reg.pair.D << 8) | cpu.reg.pair.E);
+      printf("HL: %04x\n", (cpu.reg.pair.H << 8) | cpu.reg.pair.L);
       break;
     case 0:
-      self->running = false;
+      board->running = false;
       break;
     case 2:
-      cout << (char)cpu->de.uint8_array[0];
+      cout << cpu.reg.pair.E;
       break;
     }
-
-    return 0xc9;
   }
-  return static_cast<CPMBoard *>(ctx)->memory[address];
 }
 
 uint8_t read(void *ctx, uint16_t address) {
@@ -57,31 +63,17 @@ void write(void *ctx, uint16_t address, uint8_t value) {
   static_cast<CPMBoard *>(ctx)->memory[address] = value;
 }
 
-uint8_t in(void *ctx, uint16_t port) { return 0; }
-
-void out(void *ctx, uint16_t port, uint8_t value) {}
-
 CPMBoard::CPMBoard() {
-  Z80 *cpu = new Z80();
-  cpu->sp.uint16_value = 0;
-  cpu->pc.uint16_value = 0x100;
-  cpu->context = this;
+  cpu.reg.PC = 0x100;
+  cpu.reg.SP = 0;
 
-  cpu->fetch_opcode = fetch_opcode;
-  cpu->fetch = read;
-  cpu->read = read;
-  cpu->write = write;
-  cpu->in = in;
-  cpu->out = out;
-
-  this->cpu = cpu;
+  cpu.setupCallback(read, write, nullptr, nullptr, this);
+  cpu.addCallHandler(call_handler);
 }
-
-CPMBoard::~CPMBoard() { delete static_cast<Z80 *>(cpu); }
 
 int CPMBoard::run(int cycles) {
   if (running) {
-    return z80_run(get_cpu(cpu), cycles);
+    return cpu.execute(cycles);
   } else {
     return 0;
   }
