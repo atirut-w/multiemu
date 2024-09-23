@@ -1,8 +1,8 @@
 #pragma once
 #include "multiemu/cpu.hpp"
-#include <memory>
+#include "multiemu/io.hpp"
 
-class Z80 : public CPU {
+class Z80 : public CPU, public IO {
   void *real_cpu;
 
 public:
