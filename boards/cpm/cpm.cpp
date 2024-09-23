@@ -19,7 +19,15 @@ CPMBoard::CPMBoard() {
 }
 
 int CPMBoard::step() {
-  return cpu.step();
+  if (running)
+  {
+    return cpu.step();
+  }
+  else
+  {
+    cout << "Board stopped" << endl;
+    return 0;
+  }
 }
 
 REGISTER_BOARD(cpm, create_cpm)

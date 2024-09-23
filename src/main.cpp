@@ -54,7 +54,8 @@ int main(int argc, const char *argv[]) {
   }
 
   while (true) {
-    board->step();
+    if (!board->step())
+      break;
   }
 
   return 0;
