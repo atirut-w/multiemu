@@ -3,13 +3,22 @@
 #include <Z80.h>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 
 using namespace std;
 using namespace argparse;
 
 unique_ptr<Board> create_cpm(const ArgumentParser &args) {
-  return make_unique<CPMBoard>();
+  auto board = make_unique<CPMBoard>();
+  ifstream rom(args.get<filesystem::path>("program"), ios::binary);
+  if (!rom) {
+    throw runtime_error("Cannot open ROM file");
+  }
+  rom.read(reinterpret_cast<char *>(&board->memory[0x100]), 0x10000 - 0x100);
+
+  return board;
 }
 
 CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }

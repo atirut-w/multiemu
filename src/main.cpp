@@ -1,5 +1,6 @@
 #include <argparse/argparse.hpp>
 #include <board_registry.hpp>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <multiemu/board.hpp>
@@ -17,6 +18,11 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
 
   // List available boards
   mutex.add_argument("-l", "--list").help("List available boards").flag();
+
+  // Program or ROM to load
+  parser->add_argument("program")
+      .help("Program or ROM to load")
+      .action([](const string &value) { return filesystem::path(value); });
 
   try {
     parser->parse_args(argc, argv);
@@ -54,8 +60,7 @@ int main(int argc, const char *argv[]) {
   }
 
   while (true) {
-    if (!board->run(1))
-    {
+    if (!board->run(1)) {
       cout << "Board stopped" << endl;
       break;
     }
