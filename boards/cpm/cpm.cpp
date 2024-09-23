@@ -44,6 +44,8 @@ void out(void *ctx, uint16_t port, uint8_t value) {}
 
 CPMBoard::CPMBoard() {
   Z80 *cpu = new Z80();
+  cpu->sp.uint16_value = 0;
+  cpu->pc.uint16_value = 0x100;
   cpu->context = this;
 
   cpu->fetch_opcode = fetch_opcode;
