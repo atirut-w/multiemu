@@ -45,7 +45,6 @@ int CPMBoard::step() {
   if (running) {
     return cpu.step();
   } else {
-    cout << "Board stopped" << endl;
     return 0;
   }
 }
