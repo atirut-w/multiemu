@@ -8,6 +8,7 @@ add_executable("multiemu"
 )
 target_include_directories("multiemu" PRIVATE "include" "boards" "cpus")
 target_link_libraries("multiemu" PRIVATE "argparse")
+install(TARGETS "multiemu" DESTINATION "bin")
 
 add_subdirectory("boards")
 add_subdirectory("cpus")
