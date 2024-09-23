@@ -6,12 +6,12 @@
 #include <map>
 
 class Z80 : public CPU, public IO {
-  void *real_cpu;
 
 public:
   Z80();
   ~Z80();
 
+  void *real_cpu;
   std::map<size_t, std::function<size_t(size_t)>> traps;
 
   int step() override;
