@@ -23,7 +23,7 @@ uint8_t fetch_opw(void *ctx, uint16_t address) {
   uint8_t opcode = get_self(ctx)->read(address);
   if (get_self(ctx)->traps.count(opcode))
     return get_self(ctx)->traps[opcode](address);
-  return get_self(ctx)->read(address);
+  return get_self(ctx)->fetch_opcode(address);
 }
 
 uint8_t readw(void *ctx, uint16_t address) {
