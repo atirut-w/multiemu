@@ -24,8 +24,10 @@ public:
   DataType read(std::size_t addr) {
     DataType data = 0;
     for (auto *listener : listeners) {
-      // We use bitwise OR for happy accidents where multiple devices try to drive the bus at the same time.
-      data |= listener->read(addr);
+      if (addr > listener->offset) {
+        // We use bitwise OR for happy accidents where multiple devices try to drive the bus at the same time.
+        data |= listener->read(addr - listener->offset);
+      }
     }
 
     return data;
@@ -34,7 +36,9 @@ public:
   void write(std::size_t addr, DataType data) {
     this->data = data;
     for (auto *listener : listeners) {
-      listener->write(addr, data);
+      if (addr > listener->offset) {
+        listener->write(addr - listener->offset, data);
+      }
     }
   }
 
