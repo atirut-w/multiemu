@@ -45,9 +45,9 @@ CPMBoard::CPMBoard() {
 
 CPMBoard::~CPMBoard() { delete static_cast<Z80 *>(cpu); }
 
-int CPMBoard::step() {
+int CPMBoard::run(int cycles) {
   if (running) {
-    return z80_run(get_cpu(cpu), 1);
+    return z80_run(get_cpu(cpu), cycles);
   } else {
     return 0;
   }

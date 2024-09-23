@@ -7,7 +7,7 @@ class CPMBoard : public Board {
   void *cpu;
   bool running = true;
 
-  virtual int step() override;
+  virtual int run(int cycles) override;
 
 public:
   CPMBoard();

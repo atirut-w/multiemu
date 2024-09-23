@@ -5,8 +5,8 @@
 struct Board {
   virtual ~Board() = default;
 
-  // Run the board for one step (instruction or cycle), and return the number of instructions or cycles executed.
-  virtual int step() = 0;
+  // Run the board for a set number of minimum cycles and return the actual cycles
+  virtual int run(int cycles) = 0;
 };
 
 struct BoardInfo {

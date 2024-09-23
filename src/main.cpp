@@ -54,7 +54,7 @@ int main(int argc, const char *argv[]) {
   }
 
   while (true) {
-    if (!board->step())
+    if (!board->run(1))
     {
       cout << "Board stopped" << endl;
       break;
