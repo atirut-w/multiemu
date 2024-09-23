@@ -46,7 +46,7 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  auto board = BoardRegistry::create_board(args->get<string>("board"));
+  auto board = BoardRegistry::create_board(args->get<string>("board"), *args);
   if (!board) {
     cerr << "Board not found: " << args->get<string>("board") << endl;
     list_boards();

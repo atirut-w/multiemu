@@ -1,4 +1,5 @@
 #pragma once
+#include "argparse/argparse.hpp"
 #include <memory>
 #include <string>
 
@@ -11,7 +12,7 @@ struct Board {
 
 struct BoardInfo {
   std::string name;
-  std::unique_ptr<Board> (*create)();
+  std::unique_ptr<Board> (*create)(const argparse::ArgumentParser &args);
 };
 
 #define REGISTER_BOARD(name, ctor)                                             \

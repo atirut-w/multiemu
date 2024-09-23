@@ -1,12 +1,16 @@
 #include "cpm.hpp"
+#include "argparse/argparse.hpp"
 #include <Z80.h>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 
 using namespace std;
+using namespace argparse;
 
-unique_ptr<Board> create_cpm() { return make_unique<CPMBoard>(); }
+unique_ptr<Board> create_cpm(const ArgumentParser &args) {
+  return make_unique<CPMBoard>();
+}
 
 CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }
 

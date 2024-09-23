@@ -2,6 +2,7 @@
 #include <board_registry.hpp>
 
 using namespace std;
+using namespace argparse;
 
 extern BoardInfo __start_boards;
 extern BoardInfo __stop_boards;
@@ -18,10 +19,10 @@ vector<BoardInfo *> BoardRegistry::get_board_infos() {
   return board_infos;
 }
 
-std::unique_ptr<Board> BoardRegistry::create_board(const string &name) {
+std::unique_ptr<Board> BoardRegistry::create_board(const string &name, const ArgumentParser &args) {
   for (auto *board : get_board_infos()) {
     if (board->name == name) {
-      return board->create();
+      return board->create(args);
     }
   }
 
