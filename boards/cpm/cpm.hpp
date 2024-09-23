@@ -1,6 +1,9 @@
 #pragma once
 #include "multiemu/board.hpp"
+#include "z80/z80.hpp"
 
-struct CPMBoard : Board {
+class CPMBoard : public Board {
+  Z80 cpu;
+
   virtual int step() override;
 };

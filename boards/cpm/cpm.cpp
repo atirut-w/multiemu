@@ -8,7 +8,7 @@ unique_ptr<Board> create_cpm() {
 }
 
 int CPMBoard::step() {
-  return 0;
+  return cpu.step();
 }
 
 REGISTER_BOARD(cpm, create_cpm)
