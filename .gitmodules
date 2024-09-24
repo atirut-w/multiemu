@@ -4,3 +4,6 @@
 [submodule "3rd/z80"]
 	path = 3rd/z80
 	url = https://github.com/suzukiplan/z80
+[submodule "3rd/raylib"]
+	path = 3rd/raylib
+	url = https://github.com/raysan5/raylib
