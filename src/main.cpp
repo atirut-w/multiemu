@@ -61,15 +61,16 @@ int main(int argc, const char *argv[]) {
   }
 
   auto &spec = board_info->spec;
-  auto board = board_info->create(*args);
   if (spec.display) {
     // Default resolution: 80x25 (8x16)
     int width = 640;
     int height = 400;
     InitWindow(width, height, "MultiEmu");
+    auto board = board_info->create(*args); // Give boards a chance to set up the display
+
     const char *no_disp_msg = "NO VIDEO OUTPUT";
     int text_width = MeasureText(no_disp_msg, 20);
-    
+
     // Turns out, Raylib uses double buffering
     for (int i = 0; i < 25; i++) {
       BeginDrawing();
@@ -91,6 +92,7 @@ int main(int argc, const char *argv[]) {
       EndDrawing();
     }
   } else {
+    auto board = board_info->create(*args);
     while (true) {
       if (!board->run(1)) {
         cout << "Board stopped" << endl;
