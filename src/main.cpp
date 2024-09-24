@@ -1,3 +1,4 @@
+#include "raylib.h"
 #include <argparse/argparse.hpp>
 #include <board_registry.hpp>
 #include <filesystem>
@@ -52,17 +53,49 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  auto board = BoardRegistry::create_board(args->get<string>("board"), *args);
-  if (!board) {
+  auto board_info = BoardRegistry::get_board_info(args->get<string>("board"));
+  if (!board_info) {
     cerr << "Board not found: " << args->get<string>("board") << endl;
     list_boards();
     return 1;
   }
 
-  while (true) {
-    if (!board->run(1)) {
-      cout << "Board stopped" << endl;
-      break;
+  auto &spec = board_info->spec;
+  auto board = board_info->create(*args);
+  if (spec.display) {
+    // Default resolution: 80x25 (8x16)
+    int width = 640;
+    int height = 400;
+    InitWindow(width, height, "MultiEmu");
+    const char *no_disp_msg = "NO VIDEO OUTPUT";
+    int text_width = MeasureText(no_disp_msg, 20);
+    
+    // Turns out, Raylib uses double buffering
+    for (int i = 0; i < 25; i++) {
+      BeginDrawing();
+      ClearBackground(BLACK);
+      DrawText(no_disp_msg, width / 2 - text_width / 2, height / 2 - 10, 20,
+              WHITE);
+      EndDrawing();
+    }
+
+    while (!WindowShouldClose()) {
+      BeginDrawing();
+
+      if (!board->run(1)) {
+        cout << "Board stopped" << endl;
+        CloseWindow();
+        break;
+      }
+
+      EndDrawing();
+    }
+  } else {
+    while (true) {
+      if (!board->run(1)) {
+        cout << "Board stopped" << endl;
+        break;
+      }
     }
   }
 

@@ -19,10 +19,10 @@ vector<BoardInfo *> BoardRegistry::get_board_infos() {
   return board_infos;
 }
 
-std::unique_ptr<Board> BoardRegistry::create_board(const string &name, const ArgumentParser &args) {
+BoardInfo *BoardRegistry::get_board_info(const string &name) {
   for (auto *board : get_board_infos()) {
     if (board->name == name) {
-      return board->create(args);
+      return board;
     }
   }
 

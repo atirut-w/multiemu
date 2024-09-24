@@ -5,5 +5,5 @@
 
 namespace BoardRegistry {
 std::vector<BoardInfo *> get_board_infos();
-std::unique_ptr<Board> create_board(const std::string &name, const argparse::ArgumentParser &args);
+BoardInfo * get_board_info(const std::string &name);
 } // namespace BoardRegistry
