@@ -1,5 +1,7 @@
 #include "cpm.hpp"
 #include "argparse/argparse.hpp"
+#include "multiemu/utils.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -15,10 +17,12 @@ using namespace argparse;
 unique_ptr<Board> create_cpm(const ArgumentParser &args) {
   auto board = make_unique<CPMBoard>();
   ifstream rom(args.get<filesystem::path>("program"), ios::binary);
-  if (!rom) {
-    throw runtime_error("Cannot open ROM file");
+  auto romv = Utils::load_rom(args.get<filesystem::path>("program"));
+  
+  for (int i = 0; i < min(0x10000, static_cast<int>(romv.size())); i++)
+  {
+    board->memory[i] = romv[i];
   }
-  rom.read(reinterpret_cast<char *>(&board->memory[0x100]), 0x10000 - 0x100);
 
   return board;
 }
