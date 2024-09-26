@@ -7,6 +7,7 @@ struct Board {
   virtual ~Board() = default;
 
   bool display = false;
+  int clock_speed = 4000000;
 
   // Run the board for a set number of minimum cycles and return the actual
   // cycles

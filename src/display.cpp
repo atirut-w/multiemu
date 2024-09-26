@@ -7,7 +7,7 @@ using namespace std;
 optional<RenderTexture2D> Display::framebuffer;
 
 void Display::init(int width, int height) {
-  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
   InitWindow(width, height, "MultiEmu - Initialising...");
 
   framebuffer = LoadRenderTexture(width, height);

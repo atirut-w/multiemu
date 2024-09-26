@@ -2,10 +2,12 @@
 #include "raylib.h"
 #include <argparse/argparse.hpp>
 #include <board_registry.hpp>
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <multiemu/board.hpp>
+#include <ratio>
 
 using namespace std;
 using namespace argparse;
@@ -66,13 +68,18 @@ int main(int argc, const char *argv[]) {
     Display::init(640, 400);
   }
 
+  int bias = 0;
   while (true) {
     if (board->display) {
       BeginTextureMode(*Display::framebuffer);
       ClearBackground(BLACK);
     }
 
-    if (!board->run(1) || (board->display && WindowShouldClose())) {
+    int target_cycles = (float)board->clock_speed * GetFrameTime();
+    int cycles_ran = board->run(target_cycles + bias);
+    bias = target_cycles - cycles_ran;
+
+    if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
       break;
     }
 
