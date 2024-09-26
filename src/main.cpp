@@ -61,23 +61,22 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  auto &spec = board_info->spec;
-  if (spec.display) {
+  auto board = board_info->create(*args);
+  if (board->display) {
     Display::init(640, 400);
   }
-  auto board = board_info->create(*args);
 
   while (true) {
-    if (spec.display) {
+    if (board->display) {
       BeginTextureMode(*Display::framebuffer);
       ClearBackground(BLACK);
     }
 
-    if (!board->run(1) || (spec.display && WindowShouldClose())) {
+    if (!board->run(1) || (board->display && WindowShouldClose())) {
       break;
     }
 
-    if (spec.display) {
+    if (board->display) {
       EndTextureMode();
       Display::draw();
     }

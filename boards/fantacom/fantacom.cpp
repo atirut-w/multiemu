@@ -10,7 +10,11 @@ unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
   auto board = make_unique<FantacomBoard>();
   return board;
 }
-REGISTER_BOARD(fantacom, create_fantacom, {.display = true});
+REGISTER_BOARD(fantacom, create_fantacom);
+
+FantacomBoard::FantacomBoard() {
+  display = true;
+}
 
 int FantacomBoard::run(int cycles) {
   return 1;

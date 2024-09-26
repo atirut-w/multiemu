@@ -83,4 +83,4 @@ int CPMBoard::run(int cycles) {
   }
 }
 
-REGISTER_BOARD(cpm, create_cpm, {})
+REGISTER_BOARD(cpm, create_cpm)

@@ -6,9 +6,13 @@
 struct Board {
   virtual ~Board() = default;
 
+  bool display = false;
+
   // Run the board for a set number of minimum cycles and return the actual
   // cycles
   virtual int run(int cycles) = 0;
+  // Draw graphics to the screen
+  virtual void draw() {}
 };
 
 struct BoardSpec {
@@ -17,10 +21,9 @@ struct BoardSpec {
 
 struct BoardInfo {
   std::string name;
-  BoardSpec spec;
   std::unique_ptr<Board> (*create)(const argparse::ArgumentParser &args);
 };
 
-#define REGISTER_BOARD(name, ctor, spec)                                       \
+#define REGISTER_BOARD(name, ctor)                                             \
   __attribute__((section("boards"))) static BoardInfo name##_board_info = {    \
-      #name, spec, ctor};
+      #name, ctor};
