@@ -1,3 +1,4 @@
+#include "multiemu/display.hpp"
 #include "raylib.h"
 #include <argparse/argparse.hpp>
 #include <board_registry.hpp>
@@ -62,42 +63,23 @@ int main(int argc, const char *argv[]) {
 
   auto &spec = board_info->spec;
   if (spec.display) {
-    // Default resolution: 80x25 (8x16)
-    int width = 640;
-    int height = 400;
-    InitWindow(width, height, "MultiEmu");
-    auto board = board_info->create(*args); // Give boards a chance to set up the display
+    Display::init(640, 400);
+  }
+  auto board = board_info->create(*args);
 
-    const char *no_disp_msg = "NO VIDEO OUTPUT";
-    int text_width = MeasureText(no_disp_msg, 20);
-
-    // Turns out, Raylib uses double buffering
-    for (int i = 0; i < 25; i++) {
-      BeginDrawing();
+  while (true) {
+    if (spec.display) {
+      BeginTextureMode(*Display::framebuffer);
       ClearBackground(BLACK);
-      DrawText(no_disp_msg, width / 2 - text_width / 2, height / 2 - 10, 20,
-              WHITE);
-      EndDrawing();
     }
 
-    while (!WindowShouldClose()) {
-      BeginDrawing();
-
-      if (!board->run(1)) {
-        cout << "Board stopped" << endl;
-        CloseWindow();
-        break;
-      }
-
-      EndDrawing();
+    if (!board->run(1) || (spec.display && WindowShouldClose())) {
+      break;
     }
-  } else {
-    auto board = board_info->create(*args);
-    while (true) {
-      if (!board->run(1)) {
-        cout << "Board stopped" << endl;
-        break;
-      }
+
+    if (spec.display) {
+      EndTextureMode();
+      Display::draw();
     }
   }
 
