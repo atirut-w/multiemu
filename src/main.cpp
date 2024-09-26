@@ -76,6 +76,7 @@ int main(int argc, const char *argv[]) {
     }
 
     int target_cycles = (float)board->clock_speed * GetFrameTime();
+    target_cycles = target_cycles > 0 ? target_cycles : 1;
     int cycles_ran = board->run(target_cycles + bias);
     bias = target_cycles - cycles_ran;
 
