@@ -1,6 +1,7 @@
 #include "fantacom/fantacom.hpp"
 #include "argparse/argparse.hpp"
 #include "multiemu/board.hpp"
+#include <cstdint>
 #include <memory>
 
 using namespace std;
@@ -12,10 +13,31 @@ unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
 }
 REGISTER_BOARD(fantacom, create_fantacom);
 
+FantacomBoard *FantacomBoard::get_self(void *ctx) {
+  return static_cast<FantacomBoard *>(ctx);
+}
+
+uint8_t FantacomBoard::read(void *ctx, uint16_t address) {
+  int physical = get_self(ctx)->mmu.translate(address);
+
+  if (physical < 0x4000) {
+    return get_self(ctx)->rom[physical];
+  }
+
+  cout << "TODO: read from " << hex << physical << endl;
+  
+  return 0;
+}
+
+void FantacomBoard::write(void *ctx, uint16_t address, uint8_t value) {
+}
+
 FantacomBoard::FantacomBoard() {
+  cpu.setupCallback(read, write, nullptr, nullptr, this);
   display = true;
+  mmu.pagemap[0] = 0;
 }
 
 int FantacomBoard::run(int cycles) {
-  return 1;
+  return cpu.execute(cycles);
 }
