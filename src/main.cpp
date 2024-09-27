@@ -29,6 +29,12 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
   parser->add_argument("program")
       .help("Program or ROM to load")
       .action([](const string &value) { return filesystem::path(value); });
+  
+  // Amount of RAM in KB
+  parser->add_argument("-r", "--ram")
+      .help("Amount of RAM in KB")
+      .default_value(64)
+      .action([](const string &value) { return stoi(value) * 1024; });
 
   try {
     parser->parse_args(argc, argv);

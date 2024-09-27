@@ -10,8 +10,9 @@ using namespace argparse;
 
 unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
   auto board = make_unique<FantacomBoard>();
-  auto rom = Utils::load_rom(args.get<filesystem::path>("program"));
 
+  board->ram.resize(args.get<int>("--ram"));
+  auto rom = Utils::load_rom(args.get<filesystem::path>("program"));
   for (int i = 0; i < min(0x4000, static_cast<int>(rom.size())); i++) {
     board->rom[i] = rom[i];
   }
@@ -37,18 +38,30 @@ FantacomBoard *FantacomBoard::get_self(void *ctx) {
 }
 
 uint8_t FantacomBoard::read(void *ctx, uint16_t address) {
-  int physical = get_self(ctx)->mmu.translate(address);
+  auto *self = get_self(ctx);
+  int physical = self->mmu.translate(address);
 
   if (physical < 0x4000) {
-    return get_self(ctx)->rom[physical];
+    return self->rom[physical];
   }
-
-  cout << "TODO: read from " << hex << physical << endl;
+  
+  address -= 0x4000;
+  if (address < self->ram.size()) {
+    return self->ram[address];
+  }
   
   return 0;
 }
 
 void FantacomBoard::write(void *ctx, uint16_t address, uint8_t value) {
+  auto *self = get_self(ctx);
+  int physical = self->mmu.translate(address);
+
+  // Eh, we don't write to ROM
+  address -= 0x4000;
+  if (address < self->ram.size()) {
+    self->ram[address] = value;
+  }
 }
 
 uint8_t FantacomBoard::in(void *ctx, uint16_t address) {

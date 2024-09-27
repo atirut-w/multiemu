@@ -4,6 +4,7 @@
 #include "multiemu/bus.hpp"
 #include "z80.hpp"
 #include <cstdint>
+#include <vector>
 
 class FantacomBoard : public Board {
 public:
@@ -11,6 +12,7 @@ public:
 
   Z80 cpu;
   std::array<uint8_t, 0x4000> rom;
+  std::vector<uint8_t> ram;
   MMU mmu;
   Bus<uint8_t> io;
 
