@@ -94,10 +94,7 @@ int main(int argc, const char *argv[]) {
     }
 
     if (board->display) {
-      BeginTextureMode(*Display::framebuffer);
-      ClearBackground(BLACK);
       board->draw();
-      EndTextureMode();
       Display::draw();
     }
   }
