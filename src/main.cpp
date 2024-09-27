@@ -70,11 +70,6 @@ int main(int argc, const char *argv[]) {
 
   int bias = 0;
   while (true) {
-    if (board->display) {
-      BeginTextureMode(*Display::framebuffer);
-      ClearBackground(BLACK);
-    }
-
     int target_cycles = (float)board->clock_speed * GetFrameTime();
     target_cycles = target_cycles > 0 ? target_cycles : 1;
     int cycles_ran = board->run(target_cycles + bias);
@@ -85,6 +80,9 @@ int main(int argc, const char *argv[]) {
     }
 
     if (board->display) {
+      BeginTextureMode(*Display::framebuffer);
+      ClearBackground(BLACK);
+      board->draw();
       EndTextureMode();
       Display::draw();
     }
