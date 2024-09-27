@@ -87,7 +87,7 @@ int main(int argc, const char *argv[]) {
         cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
         frame_time = 1.0 / 60;
       }
-      target_cycles = (float)board->clock_speed * GetFrameTime();
+      target_cycles = (float)board->clock_speed * frame_time;
     } else {
       target_cycles = (float)board->clock_speed / 60;
       this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
