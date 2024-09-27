@@ -38,8 +38,8 @@ void Graphics::draw() {
   ClearBackground(BLACK);
 
   // 80x25, 8x16
-  for (int cx = 0; cx < 80; cx++) {
-    for (int cy = 0; cy < 25; cy++) {
+  for (int cy = 0; cy < 25; cy++) {
+    for (int cx = 0; cx < 80; cx++) {
       auto char_index = rambus->read(vram_addr++);
       Rectangle src = {0, (float)char_index * 16, 8, 16};
       Rectangle dst = {(float)cx * 8, (float)cy * 16, 8, 16};
