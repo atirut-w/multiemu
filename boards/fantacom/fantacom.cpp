@@ -10,12 +10,8 @@ using namespace argparse;
 
 unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
   auto board = make_unique<FantacomBoard>();
-
-  board->ram.resize(args.get<int>("--ram"));
-  auto rom = Utils::load_rom(args.get<filesystem::path>("program"));
-  for (int i = 0; i < min(0x4000, static_cast<int>(rom.size())); i++) {
-    board->rom[i] = rom[i];
-  }
+  board->rom.data = Utils::load_rom(args.get<filesystem::path>("program"));
+  board->ram.data.resize(args.get<int>("--ram"));
 
   return board;
 }
@@ -24,8 +20,11 @@ REGISTER_BOARD(fantacom, create_fantacom);
 FantacomBoard::FantacomBoard() {
   cpu.setupCallback(read, write, in, out, this);
   display = true;
+  ram.offset = 0x4000;
   mmu.pagemap.fill(0);
 
+  rambus.add_listener(&rom);
+  rambus.add_listener(&ram);
   io.add_listener(&mmu);
 }
 
@@ -39,29 +38,12 @@ FantacomBoard *FantacomBoard::get_self(void *ctx) {
 
 uint8_t FantacomBoard::read(void *ctx, uint16_t address) {
   auto *self = get_self(ctx);
-  int physical = self->mmu.translate(address);
-
-  if (physical < 0x4000) {
-    return self->rom[physical];
-  }
-  
-  address -= 0x4000;
-  if (address < self->ram.size()) {
-    return self->ram[address];
-  }
-  
-  return 0;
+  return self->rambus.read(self->mmu.translate(address));
 }
 
 void FantacomBoard::write(void *ctx, uint16_t address, uint8_t value) {
   auto *self = get_self(ctx);
-  int physical = self->mmu.translate(address);
-
-  // Eh, we don't write to ROM
-  address -= 0x4000;
-  if (address < self->ram.size()) {
-    self->ram[address] = value;
-  }
+  self->rambus.write(self->mmu.translate(address), value);
 }
 
 uint8_t FantacomBoard::in(void *ctx, uint16_t address) {
