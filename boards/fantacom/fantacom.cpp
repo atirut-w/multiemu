@@ -11,6 +11,7 @@ using namespace argparse;
 unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
   auto board = make_unique<FantacomBoard>();
   board->rom.data = Utils::load_rom(args.get<filesystem::path>("program"));
+  board->rom.data.resize(0x4000);
   board->ram.data.resize(args.get<int>("--ram"));
 
   return board;
