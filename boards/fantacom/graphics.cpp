@@ -18,34 +18,32 @@ void Graphics::write(std::size_t addr, uint8_t data) {
 
 void Graphics::draw() {
   auto charset_addr = data[0] | data[1] << 8 | data[2] << 16;
-  auto vram_addr = data[3] | data[4] << 8 | data[5] << 16;
-
-  auto charset = LoadRenderTexture(8, 16 * 256);
-  BeginTextureMode(charset);
-  ClearBackground(BLACK);
-
+  auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
     auto char_row = rambus->read(charset_addr++);
     for (int col = 0; col < 8; col++) {
       auto bit = (char_row >> (7 - col)) & 1;
-      DrawPixel(col, (16 * 256 - 1) - row, bit ? WHITE : BLACK);
+      ImageDrawPixel(&charset_img, col, row, bit ? WHITE : BLACK);
     }
   }
 
-  EndTextureMode();
+  auto charset_tex = LoadTextureFromImage(charset_img);
+  UnloadImage(charset_img);
 
   BeginTextureMode(*Display::framebuffer);
   ClearBackground(BLACK);
 
   // 80x25, 8x16
+  auto vram_addr = data[3] | data[4] << 8 | data[5] << 16;
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
       auto char_index = rambus->read(vram_addr++);
       Rectangle src = {0, (float)char_index * 16, 8, 16};
       Rectangle dst = {(float)cx * 8, (float)cy * 16, 8, 16};
-      DrawTexturePro(charset.texture, src, dst, {0, 0}, 0, WHITE);
+      DrawTexturePro(charset_tex, src, dst, {0, 0}, 0, WHITE);
     }
   }
 
   EndTextureMode();
+  UnloadTexture(charset_tex);
 }
