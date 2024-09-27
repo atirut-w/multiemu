@@ -3,6 +3,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace MultiEmu;
 
 optional<RenderTexture2D> Display::framebuffer;
 

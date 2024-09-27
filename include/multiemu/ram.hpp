@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 
+namespace MultiEmu {
 struct RAM : BusDevice<uint8_t> {
   RAM() = default;
   RAM(std::size_t size) : data(size) {}
@@ -17,3 +18,4 @@ struct RAM : BusDevice<uint8_t> {
     }
   }
 };
+} // namespace MultiEmu

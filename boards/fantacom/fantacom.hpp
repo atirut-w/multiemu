@@ -9,18 +9,18 @@
 #include <cstdint>
 #include <vector>
 
-class FantacomBoard : public Board {
+class FantacomBoard : public MultiEmu::Board {
 public:
   FantacomBoard();
 
   Z80 cpu;
   Graphics gfx;
-  ROM rom;
-  RAM ram;
+  MultiEmu::ROM rom;
+  MultiEmu::RAM ram;
   MMU mmu;
 
-  Bus<uint8_t> rambus;
-  Bus<uint8_t> io;
+  MultiEmu::Bus<uint8_t> rambus;
+  MultiEmu::Bus<uint8_t> io;
 
   virtual int run(int cycles) override;
   virtual void draw() override;

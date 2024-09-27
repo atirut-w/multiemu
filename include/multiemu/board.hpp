@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+namespace MultiEmu {
 struct Board {
   virtual ~Board() = default;
 
@@ -24,7 +25,8 @@ struct BoardInfo {
   std::string name;
   std::unique_ptr<Board> (*create)(const argparse::ArgumentParser &args);
 };
+} // namespace MultiEmu
 
 #define REGISTER_BOARD(name, ctor)                                             \
-  __attribute__((section("boards"))) static BoardInfo name##_board_info = {    \
+  __attribute__((section("boards"))) static MultiEmu::BoardInfo name##_board_info = {    \
       #name, ctor};

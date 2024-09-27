@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-struct MMU : BusDevice<uint8_t> {
+struct MMU : MultiEmu::BusDevice<uint8_t> {
   std::array<std::uint8_t, 16> pagemap;
 
   std::uint8_t read(std::size_t addr) override;

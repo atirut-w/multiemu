@@ -3,7 +3,7 @@
 #include "multiemu/board.hpp"
 #include <vector>
 
-namespace BoardRegistry {
+namespace MultiEmu::BoardRegistry {
 std::vector<BoardInfo *> get_board_infos();
 BoardInfo * get_board_info(const std::string &name);
 } // namespace BoardRegistry

@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-class CPMBoard : public Board {
+class CPMBoard : public MultiEmu::Board {
 
   virtual int run(int cycles) override;
 

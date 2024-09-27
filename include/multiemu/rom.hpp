@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 
+namespace MultiEmu {
 struct ROM : BusDevice<uint8_t> {
   ROM() = default;
   ROM(const std::vector<uint8_t> &data) : data(data) {}
@@ -12,3 +13,4 @@ struct ROM : BusDevice<uint8_t> {
     return addr < data.size() ? data[addr] : 0;
   }
 };
+} // namespace MultiEmu

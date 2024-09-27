@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace argparse;
+using namespace MultiEmu;
 
 unique_ptr<Board> create_cpm(const ArgumentParser &args) {
   auto board = make_unique<CPMBoard>();

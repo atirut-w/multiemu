@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace argparse;
+using namespace MultiEmu;
 
 extern BoardInfo __start_boards;
 extern BoardInfo __stop_boards;

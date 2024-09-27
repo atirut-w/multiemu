@@ -1,7 +1,9 @@
 #include "multiemu/utils.hpp"
 #include <filesystem>
 #include <fstream>
+
 using namespace std;
+using namespace MultiEmu;
 
 vector<uint8_t> Utils::load_rom(const filesystem::path &path) {
   ifstream file(path, ios::binary);

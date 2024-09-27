@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace argparse;
+using namespace MultiEmu;
 
 unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
   auto parser = make_unique<ArgumentParser>("multiemu");

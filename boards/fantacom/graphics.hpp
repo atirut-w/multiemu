@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-struct Graphics : public BusDevice<uint8_t> {
+struct Graphics : public MultiEmu::BusDevice<uint8_t> {
   std::array<uint8_t, 16> data;
 
   virtual uint8_t read(std::size_t addr) override;
