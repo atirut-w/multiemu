@@ -23,7 +23,7 @@ REGISTER_BOARD(fantacom, create_fantacom);
 FantacomBoard::FantacomBoard() {
   cpu.setupCallback(read, write, nullptr, nullptr, this);
   display = true;
-  mmu.pagemap[0] = 0;
+  mmu.pagemap.fill(0);
 
   io.add_listener(&mmu);
 }
