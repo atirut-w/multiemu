@@ -1,5 +1,6 @@
 #include "multiemu/display.hpp"
 #include "raylib.h"
+#include <algorithm>
 #include <argparse/argparse.hpp>
 #include <board_registry.hpp>
 #include <chrono>
@@ -79,8 +80,7 @@ int main(int argc, const char *argv[]) {
       this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
     }
 
-    target_cycles = target_cycles > 0 ? target_cycles : 1;
-    int cycles_ran = board->run(target_cycles + bias);
+    int cycles_ran = board->run(max(1, target_cycles + bias));
     bias = target_cycles - cycles_ran;
 
     if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
