@@ -82,6 +82,11 @@ int main(int argc, const char *argv[]) {
   while (true) {
     int target_cycles;
     if (board->display) {
+      float frame_time = GetFrameTime();
+      if (frame_time > 5.0) {
+        cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
+        frame_time = 1.0 / 60;
+      }
       target_cycles = (float)board->clock_speed * GetFrameTime();
     } else {
       target_cycles = (float)board->clock_speed / 60;
