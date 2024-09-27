@@ -2,10 +2,10 @@
     .type _start, @function
 _start:
     ld a, 4
-    out (1), a ; Map RAM into page 1
+    out (1), a
 
-    ld (0x4000), a
-    ret
+    ld (0x1000), a
+    jp _hang
 
 
     .global _hang
