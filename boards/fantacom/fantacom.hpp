@@ -1,4 +1,5 @@
 #pragma once
+#include "fantacom/graphics.hpp"
 #include "fantacom/mmu.hpp"
 #include "multiemu/board.hpp"
 #include "multiemu/bus.hpp"
@@ -13,6 +14,7 @@ public:
   FantacomBoard();
 
   Z80 cpu;
+  Graphics gfx;
   ROM rom;
   RAM ram;
   MMU mmu;
@@ -21,6 +23,7 @@ public:
   Bus<uint8_t> io;
 
   virtual int run(int cycles) override;
+  virtual void draw() override;
   static FantacomBoard *get_self(void *ctx);
   static uint8_t read(void *ctx, uint16_t address);
   static void write(void *ctx, uint16_t address, uint8_t value);

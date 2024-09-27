@@ -27,10 +27,15 @@ FantacomBoard::FantacomBoard() {
   rambus.add_listener(&rom);
   rambus.add_listener(&ram);
   io.add_listener(&mmu);
+  io.add_listener(&gfx);
 }
 
 int FantacomBoard::run(int cycles) {
   return cpu.execute(cycles);
+}
+
+void FantacomBoard::draw() {
+  gfx.draw();
 }
 
 FantacomBoard *FantacomBoard::get_self(void *ctx) {
