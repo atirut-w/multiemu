@@ -8,6 +8,7 @@
 #include <memory>
 #include <multiemu/board.hpp>
 #include <ratio>
+#include <thread>
 
 using namespace std;
 using namespace argparse;
@@ -70,7 +71,14 @@ int main(int argc, const char *argv[]) {
 
   int bias = 0;
   while (true) {
-    int target_cycles = (float)board->clock_speed * GetFrameTime();
+    int target_cycles;
+    if (board->display) {
+      target_cycles = (float)board->clock_speed * GetFrameTime();
+    } else {
+      target_cycles = (float)board->clock_speed / 60;
+      this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
+    }
+
     target_cycles = target_cycles > 0 ? target_cycles : 1;
     int cycles_ran = board->run(target_cycles + bias);
     bias = target_cycles - cycles_ran;
