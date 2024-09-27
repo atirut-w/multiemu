@@ -1,6 +1,7 @@
 #include "fantacom/fantacom.hpp"
 #include "argparse/argparse.hpp"
 #include "multiemu/board.hpp"
+#include "multiemu/utils.hpp"
 #include <cstdint>
 #include <memory>
 
@@ -9,6 +10,12 @@ using namespace argparse;
 
 unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
   auto board = make_unique<FantacomBoard>();
+  auto rom = Utils::load_rom(args.get<filesystem::path>("program"));
+
+  for (int i = 0; i < min(0x4000, static_cast<int>(rom.size())); i++) {
+    board->rom[i] = rom[i];
+  }
+
   return board;
 }
 REGISTER_BOARD(fantacom, create_fantacom);
