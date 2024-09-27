@@ -20,6 +20,18 @@ unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
 }
 REGISTER_BOARD(fantacom, create_fantacom);
 
+FantacomBoard::FantacomBoard() {
+  cpu.setupCallback(read, write, nullptr, nullptr, this);
+  display = true;
+  mmu.pagemap[0] = 0;
+
+  io.add_listener(&mmu);
+}
+
+int FantacomBoard::run(int cycles) {
+  return cpu.execute(cycles);
+}
+
 FantacomBoard *FantacomBoard::get_self(void *ctx) {
   return static_cast<FantacomBoard *>(ctx);
 }
@@ -39,12 +51,10 @@ uint8_t FantacomBoard::read(void *ctx, uint16_t address) {
 void FantacomBoard::write(void *ctx, uint16_t address, uint8_t value) {
 }
 
-FantacomBoard::FantacomBoard() {
-  cpu.setupCallback(read, write, nullptr, nullptr, this);
-  display = true;
-  mmu.pagemap[0] = 0;
+uint8_t FantacomBoard::in(void *ctx, uint16_t address) {
+  return get_self(ctx)->io.read(address);
 }
 
-int FantacomBoard::run(int cycles) {
-  return cpu.execute(cycles);
+void FantacomBoard::out(void *ctx, uint16_t address, uint8_t value) {
+  get_self(ctx)->io.write(address, value);
 }
