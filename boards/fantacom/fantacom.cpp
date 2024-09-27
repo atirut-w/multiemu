@@ -21,7 +21,7 @@ unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
 REGISTER_BOARD(fantacom, create_fantacom);
 
 FantacomBoard::FantacomBoard() {
-  cpu.setupCallback(read, write, nullptr, nullptr, this);
+  cpu.setupCallback(read, write, in, out, this);
   display = true;
   mmu.pagemap.fill(0);
 
