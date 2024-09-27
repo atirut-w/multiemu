@@ -1,8 +1,10 @@
 project("fantacom_bootrom" ASM)
 configure_file("link.ld" "link.ld" COPYONLY)
+configure_file("seabios8x16.bin" "seabios8x16.bin" COPYONLY)
 add_executable("bootrom"
     "rst.s"
     "rt0.s"
+    "charset.s"
 )
 target_link_options("bootrom" PRIVATE "-T" "${CMAKE_CURRENT_BINARY_DIR}/link.ld")
 

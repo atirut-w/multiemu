@@ -1,10 +1,15 @@
     .global _start
     .type _start, @function
 _start:
-    ld a, 4
-    out (1), a
+    ld bc, 16
+    ld hl, charset
 
-    ld (0x1000), a
+    out (c), l
+    inc c
+    out (c), h
+    inc c
+    xor a
+    out (c), a
     jp _hang
 
 
