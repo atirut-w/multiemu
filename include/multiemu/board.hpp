@@ -1,10 +1,11 @@
 #pragma once
 #include "argparse/argparse.hpp"
+#include "multiemu/device.hpp"
 #include <memory>
 #include <string>
 
 namespace MultiEmu {
-struct Board {
+struct Board : public Device {
   virtual ~Board() = default;
 
   bool display = false;
