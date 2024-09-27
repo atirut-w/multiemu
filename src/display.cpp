@@ -32,7 +32,7 @@ void Display::draw() {
 
   BeginDrawing();
 
-  ClearBackground(BLACK);
+  ClearBackground(DARKGRAY);
   DrawTexturePro(framebuffer->texture, src, dst, {0, 0}, 0, WHITE);
 
   EndDrawing();
