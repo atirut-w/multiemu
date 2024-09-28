@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <memory>
 
+#define ROM_SIZE 0x2000
+
 using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
@@ -17,7 +19,7 @@ REGISTER_BOARD(fantacom, create_fantacom);
 
 void FantacomBoard::init(const ArgumentParser &args) {
   rom.data = Utils::load_rom(args.get<filesystem::path>("program"));
-  rom.data.resize(0x4000);
+  rom.data.resize(ROM_SIZE);
   ram.data.resize(args.get<int>("--ram"));
   mmu.pagemap.fill(0);
 
@@ -27,7 +29,7 @@ void FantacomBoard::init(const ArgumentParser &args) {
 FantacomBoard::FantacomBoard() {
   cpu.setupCallback(read, write, in, out, this);
   display = true;
-  ram.offset = 0x4000;
+  ram.offset = ROM_SIZE;
   gfx.rambus = &rambus;
   gfx.offset = 16;
 
