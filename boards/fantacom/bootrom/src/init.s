@@ -1,3 +1,4 @@
+    .global _start
 _start:
     ld bc, 16
     ld hl, font
