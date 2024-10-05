@@ -1,3 +1,4 @@
+    .section .rodata
     .balign 16
     .global font
 font:
