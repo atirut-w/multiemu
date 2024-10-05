@@ -37,7 +37,7 @@ void Graphics::write(std::size_t addr, uint8_t data) {
 }
 
 void Graphics::draw() {
-  auto charset_addr = data[0] | data[1] << 8 | data[2] << 16;
+  auto charset_addr = *(uint32_t *)&data[0];
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
     auto char_row = rambus->read(charset_addr++);
@@ -54,7 +54,7 @@ void Graphics::draw() {
   ClearBackground(BLACK);
 
   // 80x25, 8x16
-  auto vram_addr = data[3] | data[4] << 8 | data[5] << 16;
+  auto vram_addr = *(uint32_t *)&data[4];
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
       auto char_index = rambus->read(vram_addr++);
