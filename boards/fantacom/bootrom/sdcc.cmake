@@ -1,0 +1,4 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR z80)
+
+set(CMAKE_C_COMPILER sdcc-sdcc)
