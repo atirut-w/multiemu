@@ -16,13 +16,13 @@ ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
 
 # Compiler and tools
-CC := sdcc-sdcc
+CC := ez80-clang
 LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
 AS := z80-elf-as
 
 # Flags
-CFLAGS := -mz80 --std-sdcc99 --opt-code-size --no-std-crt0 -S
+CFLAGS := -target z80-unknown-elf -S
 ASFLAGS := -I $(SRC_DIR)
 LDFLAGS := -T linker.ld
 
@@ -49,6 +49,8 @@ $(BUILD_DIR)/bootrom.elf: $(OBJECTS) linker.ld | $(BUILD_DIR)
 # Compile C source files to assembly using SDCC
 $(OBJ_DIR)/%.s: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
+# Fix up directives
+	sed -i 's/public/\.global/g' $@
 	@echo "Compiled $< to $@"
 
 # Assemble assembly files generated from C sources
