@@ -27,7 +27,7 @@ void FantacomBoard::init(const ArgumentParser &args) {
 }
 
 FantacomBoard::FantacomBoard() {
-  cpu.setupCallback(read, write, in, out, this);
+  cpu.setupCallback(read, write, in, out, this, true);
   display = true;
   ram.offset = ROM_SIZE;
   gfx.rambus = &rambus;
