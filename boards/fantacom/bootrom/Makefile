@@ -22,7 +22,7 @@ OBJCOPY := z80-elf-objcopy
 AS := z80-elf-as
 
 # Flags
-CFLAGS := -target z80-unknown-elf -S
+CFLAGS := -target z80-unknown-elf -S -I$(SRC_DIR)/include
 ASFLAGS := -I $(SRC_DIR)
 LDFLAGS := -T linker.ld
 
