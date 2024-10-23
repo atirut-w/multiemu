@@ -6,8 +6,8 @@ BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 
 # Source files
-C_SOURCES := $(wildcard $(SRC_DIR)/*.c)
-ASM_SOURCES := $(wildcard $(SRC_DIR)/*.s)
+C_SOURCES := $(shell find $(SRC_DIR) -name '*.c')
+ASM_SOURCES := $(shell find $(SRC_DIR) -name '*.s')
 SOURCES := $(C_SOURCES) $(ASM_SOURCES)
 
 # Object files
@@ -48,6 +48,7 @@ $(BUILD_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
 $(OBJ_DIR)/%.s: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
 	sed -i 's/_\([a-zA-Z0-9_]*\)/\1/g' $@
 

@@ -20,9 +20,15 @@ _start:
 2:
     ld hl, 0x3000
     ld sp, hl
+    call init_drivers
     call main
     jr _hang
 
 _hang:
     halt
     jr _hang
+
+    .global __sdcc_call_hl
+__sdcc_call_hl:
+    jp (hl)
+    ret

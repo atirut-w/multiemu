@@ -11,5 +11,13 @@ SECTIONS
     .text : {
         *(.startup)
         *(.text)
+
+        drivers_start = .;
+        *(.drivers)
+        drivers_end = .;
     } > ROM
+
+    .bss : {
+        *(.bss)
+    } > RAM
 }
