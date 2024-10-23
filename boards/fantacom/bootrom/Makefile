@@ -16,61 +16,43 @@ ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
 
 # Compiler and tools
-CC := ez80-clang
+CC := sdcc-sdcc
+AS := z80-elf-as
 LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
-AS := z80-elf-as
 
 # Flags
-CFLAGS := -target z80-unknown-elf -S -I$(SRC_DIR)/include
-ASFLAGS := -I $(SRC_DIR)
+CFLAGS := -mz80 -S -I$(SRC_DIR)/include --codeseg .text --constseg .rodata --dataseg .data
+ASFLAGS := -I$(SRC_DIR)
 LDFLAGS := -T linker.ld
 
-# Target binary
+# Main target
 TARGET := $(BUILD_DIR)/bootrom.bin
 
-# === Targets ===
+# === Rules ===
 
 .PHONY: all clean
 
-# Default target
-all: $(TARGET)
+all: $(BUILD_DIR)/bootrom.bin
 
-# Convert ELF to binary
-$(TARGET): $(BUILD_DIR)/bootrom.elf | $(BUILD_DIR)
-	$(OBJCOPY) -O binary $< $@
-	@echo "Generated $(TARGET)"
+clean:
+	rm -rf $(BUILD_DIR)
 
-# Link ELF binary
-$(BUILD_DIR)/bootrom.elf: $(OBJECTS) linker.ld | $(BUILD_DIR)
-	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
-	@echo "Linked $@"
+$(TARGET): $(BUILD_DIR)/bootrom.elf
+	$(OBJCOPY) -O binary $^ $@
 
-# Compile C source files to assembly using SDCC
+$(BUILD_DIR)/bootrom.elf: $(OBJECTS) | $(BUILD_DIR)
+	$(LD) $(LDFLAGS) -o $@ $^
+
+$(BUILD_DIR) $(OBJ_DIR):
+	mkdir -p $@
+
 $(OBJ_DIR)/%.s: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
-# Fix up directives
-	sed -i 's/public/\.global/g' $@
-	@echo "Compiled $< to $@"
+	sed -i 's/_\([a-zA-Z0-9_]*\)/\1/g' $@
 
-# Assemble assembly files generated from C sources
-$(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s
-	$(AS) $(ASFLAGS) -sdcc -o $@ $<
-	@echo "Assembled $@ from $<"
+$(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s | $(OBJ_DIR)
+	$(AS) -sdcc -o $@ $<
 
-# Assemble existing assembly source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
 	$(AS) $(ASFLAGS) -o $@ $<
-	@echo "Assembled $@ from $<"
-
-# Create necessary directories
-$(OBJ_DIR):
-	mkdir -p $@
-
-$(BUILD_DIR):
-	mkdir -p $@
-
-# Clean build artifacts
-clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
-	@echo "Cleaned build artifacts"
