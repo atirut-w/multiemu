@@ -4,9 +4,19 @@
     
     .global _start
 _start:
-    ld bc, PAGETABLE + 2 ; Virtual-to-physical remap registers
-    ld hl, 0x2000 ; Virtual page address
-    ld d, 2 ; First physical page to test
+    ; Set up ROM mapping (2 pages)
+    ld bc, 0
+    xor a
+    out (c), a
+
+    inc bc
+    inc a
+    out (c), a
+
+    ; Initialize memory
+    ld bc, PAGETABLE + 2    ; Virtual-to-physical remap registers
+    ld hl, 0x2000           ; Virtual page address
+    ld d, 2                 ; First physical page to test
 0:
     out (c), d
     ld (hl), 0x55
