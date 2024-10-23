@@ -34,7 +34,7 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
   // Amount of RAM in KB
   parser->add_argument("-r", "--ram")
       .help("Amount of RAM in KB")
-      .default_value(64)
+      .default_value(64 * 1024)
       .action([](const string &value) { return stoi(value) * 1024; });
 
   try {
