@@ -20,4 +20,10 @@ SECTIONS
     .bss : {
         *(.bss)
     } > RAM
+
+    .data : {
+        data_start = .;
+        *(.data)
+        data_end = .;
+    } > RAM AT > ROM
 }
