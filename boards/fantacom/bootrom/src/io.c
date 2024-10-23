@@ -1,6 +1,7 @@
 // Z80 I/O routines
 #pragma once
 #include <stdint.h>
+#include <io.h>
 
 void outb(uint16_t port, uint8_t data) {
 __asm
