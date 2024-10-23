@@ -56,4 +56,5 @@ $(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s | $(OBJ_DIR)
 	$(AS) -sdcc -o $@ $<
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
+	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -o $@ $<
