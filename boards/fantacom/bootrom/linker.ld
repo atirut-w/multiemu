@@ -17,13 +17,16 @@ SECTIONS
         drivers_end = .;
     } > ROM
 
-    .bss : {
-        *(.bss)
-    } > RAM
-
     .data : {
         data_start = .;
         *(.data)
         data_end = .;
     } > RAM AT > ROM
+    data_load = LOADADDR(.data);
+
+    .bss : {
+        bss_start = .;
+        *(.bss)
+        bss_end = .;
+    } > RAM
 }

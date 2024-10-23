@@ -30,6 +30,8 @@ _start:
 2:
     ld hl, 0x3000
     ld sp, hl
+    call init_data
+    call init_bss
     call init_drivers
     call main
     jr _hang
