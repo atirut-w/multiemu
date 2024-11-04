@@ -25,7 +25,7 @@ LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
 
 # Flags
-CFLAGS := -mz80 -S -I$(SRC_DIR)/include --opt-code-speed
+CFLAGS := -mz80 -S -I$(SRC_DIR)/include --opt-code-size
 ASFLAGS := -I$(SRC_DIR)
 LDFLAGS := -T linker.ld
 
