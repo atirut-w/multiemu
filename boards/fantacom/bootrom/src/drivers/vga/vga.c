@@ -65,5 +65,6 @@ int puts(const char *str) {
     putchar(*str++);
     len++;
   }
+  putchar('\n');
   return len;
 }
