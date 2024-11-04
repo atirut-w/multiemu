@@ -1,8 +1,10 @@
+#include "io.h"
+#include "mmu/mmu.h"
 #include <stdint.h>
 #include <stdio.h>
-#include "io.h"
 
 int main() {
-  puts("Hello, World!\b");
+  printf("Hello, %s!\n", "world");
+  printf("%d\n", 100);
   return 0;
 }

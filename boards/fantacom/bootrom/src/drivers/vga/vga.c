@@ -60,8 +60,10 @@ int putchar(int ch) {
 }
 
 int puts(const char *str) {
+  int len = 0;
   while (*str) {
     putchar(*str++);
+    len++;
   }
-  return 0;
+  return len;
 }
