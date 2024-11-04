@@ -4,7 +4,7 @@
 #include <io.h>
 
 void outb(uint16_t port, uint8_t data) {
-__asm
+__asm;
   push ix
   ld ix, #0
   add ix, sp
@@ -27,4 +27,22 @@ void outw(uint16_t port, uint16_t data) {
 void outl(uint16_t port, uint32_t data) {
   outw(port, data & 0xffff);
   outw(port + 2, data >> 16);
+}
+
+uint8_t inb(uint16_t port) {
+__asm;
+  push ix
+  ld ix, #0
+  add ix, sp
+
+  ld c, (ix+4)
+  ld b, (ix+5)
+  in a, (c)
+
+  ld l, a
+  ld h, #0
+
+  pop ix
+  ret
+__endasm;
 }

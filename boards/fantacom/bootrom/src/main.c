@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 int main() {
-  printf("Hello, %s!\n", "world");
-  printf("%d\n", 100);
+  printf("Fantacom boot ROM, (C) Atirut Wattanamongkol and contributors\n\n");
+  mmu_probe();
   return 0;
 }
