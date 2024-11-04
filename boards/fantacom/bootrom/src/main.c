@@ -3,7 +3,8 @@
 #include "io.h"
 
 int main() {
-  puts("Hello, World!\n");
-  puts("Hello, World!\n");
+  while (1) {
+    puts("Hello, World! ");
+  }
   return 0;
 }
