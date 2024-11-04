@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  divmixed.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2010, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,33 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+.globl	__divsuchar
+.globl	__divuschar
 
-.globl	__modschar
-.globl	__modsint
+__divsuchar:
+	ld	hl, #2+1
+	add	hl, sp
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+	ld	e, (hl)
+	dec	hl
+	ld	l, (hl)
+	ld	h, #0
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
+	jp	__div_signexte
 
-        call    __div8
+__divuschar:
+	ld	hl, #2+1
+	ld	d, h
+	add	hl, sp
 
-        jp	__get_remainder
+	ld	e, (hl)
+	dec	hl
+	ld	l, (hl)
 
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
+	ld 	a, l	; Sign extend
+	rlca
+	sbc	a, a
+	ld	h, a
 
-        call    __div16
-
-        jp	__get_remainder
+	jp	__div16
 

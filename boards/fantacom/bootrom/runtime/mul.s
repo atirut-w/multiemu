@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  mulchar.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2000, Michael Hope
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -28,30 +28,48 @@
 
 .area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+.globl	__mulint
+.globl	__mul16
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
-
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
+__mulint:
         pop     af
-        pop     hl
+        pop     bc
         pop     de
         push    de
-        push    hl
+        push    bc
         push    af
 
-        call    __div16
+	;; 16-bit multiplication
+	;;
+	;; Entry conditions
+	;; bc = multiplicand
+	;; de = multiplier
+	;;
+	;; Exit conditions
+	;; hl = less significant word of product
+	;;
+	;; Register used: AF,BC,DE,HL
+__mul16::
+	xor	a,a
+	ld	l,a
+	or	a,b
+	ld	b,#16
 
-        jp	__get_remainder
+        ;; Optimise for the case when this side has 8 bits of data or
+        ;; less.  This is often the case with support address calls.
+        jr      NZ,2$
+        ld      b,#8
+        ld      a,c
+1$:
+        ;; Taken from z88dk, which originally borrowed from the
+        ;; Spectrum rom.
+        add     hl,hl
+2$:
+        rl      c
+        rla                     ;DLE 27/11/98
+        jr      NC,3$
+        add     hl,de
+3$:
+        djnz    1$
+        ret
 

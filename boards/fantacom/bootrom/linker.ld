@@ -11,22 +11,24 @@ SECTIONS
     .text : {
         *(.startup)
         *(.text)
+        *(_CODE)
 
-        drivers_start = .;
+        _drivers_start = .;
         *(.drivers)
-        drivers_end = .;
+        _drivers_end = .;
     } > ROM
 
     .data : {
-        data_start = .;
+        _data_start = .;
         *(.data)
-        data_end = .;
+        *(_DATA)
+        _data_end = .;
     } > RAM AT > ROM
-    data_load = LOADADDR(.data);
+    _data_load = LOADADDR(.data);
 
     .bss : {
-        bss_start = .;
+        _bss_start = .;
         *(.bss)
-        bss_end = .;
+        _bss_end = .;
     } > RAM
 }

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  strlen.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2008-2009, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,22 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+	.globl _strlen
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+; The Z80 has the cpir instruction, which is perfect for implementing strlen().
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
+_strlen:
+	pop	bc
+	pop	hl
+	push	hl
+	push	bc
+	xor	a, a
+	ld	b, a
+	ld	c, a
+	cpir
+	ld	hl, #-1
+	sbc	hl, bc	; C flag still cleared from xor above.
+	ret
 

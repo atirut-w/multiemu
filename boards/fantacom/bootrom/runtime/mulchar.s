@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  mulchar.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (c) 2017, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -28,30 +28,52 @@
 
 .area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+; unsigned char x unsigned char multiplication is done by code generation.
 
-__modschar:
+.globl	__mulsuchar
+.globl	__muluschar
+.globl	__mulschar
+
+; operands have different sign
+
+__mulsuchar:
+        ld      hl,#2+1
+        ld      b, h
+        add     hl,sp
+
+        ld      e,(hl)
+        dec     hl
+        ld      c,(hl)
+        jr      signexte
+
+__muluschar:
+        ld      hl,#2
+        ld      b, h
+        add     hl,sp
+
+        ld      e,(hl)
+        inc     hl
+        ld      c,(hl)
+        jr      signexte
+
+__mulschar:
         ld      hl,#2+1
         add     hl,sp
 
         ld      e,(hl)
         dec     hl
-        ld      l,(hl)
+        ld      c,(hl)
 
-        call    __div8
+        ;; Need to sign extend before going in.
+        ld      a,c
+        rla
+        sbc     a,a
+        ld      b,a
+signexte:
+        ld      a,e
+        rla
+        sbc     a,a
+        ld      d,a
 
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
+        jp      __mul16
 

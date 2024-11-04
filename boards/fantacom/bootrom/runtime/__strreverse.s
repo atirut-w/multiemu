@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  __strreverse.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2020, Sergey Belyashov
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,36 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
-
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
-
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
-
+	.globl ___strreverse
+	.globl ___strreverse_reg
+;
+;void __reverse(char *beg, char *end);
+;
+___strreverse::
+	pop	bc
+	pop	de
+	pop	hl
+	push	hl
+	push	de
+	push	bc
+;
+;in: HL - pointer to end of string (null symbol), DE - pointer to start of string
+;
+___strreverse_reg::
+	jr	110$
+100$:
+	add	hl, de
+	ld	a, (de)
+	ld	c, (hl)
+	ld	(hl), a
+	ld	a, c
+	ld	(de), a
+	inc	de
+110$:
+	dec	hl
+	or	a, a
+	sbc	hl, de
+	jr	NC, 100$
+	ret

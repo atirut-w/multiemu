@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  crtcall.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2011, Maarten Brock, 2015 Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -13,7 +13,7 @@
 ;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 ;  GNU General Public License for more details.
 ;
-;  You should have received a copy of the GNU General Public License 
+;  You should have received a copy of the GNU General Public License
 ;  along with this library; see the file COPYING. If not, write to the
 ;  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
 ;   MA 02110-1301, USA.
@@ -26,32 +26,12 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+	.globl ___sdcc_call_iy
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+; The Z80 has the jp (iy) instruction, which is perfect for implementing function pointers.
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
+___sdcc_call_iy:
+	jp	(iy)
 

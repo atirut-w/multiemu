@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  abs.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2010, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,36 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+	.globl _abs
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+; 12B; 86T for nonnegative arguments, 78T for negative.
+_abs:
+	pop	hl
+	pop	de
+	push	de
+	push	hl
+	xor	a, a
+	ld	l, a
+	ld	h, a
+	sbc	hl, de
+	ret	P
+	ex	de, hl
+	ret
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
+; 14B; 59T for nonegative arguments, 94T for negative:
+;_abs:
+;	pop	de
+;	pop	hl
+;	push	hl
+;	push	de
+;	bit	7, h
+;	ret	Z
+;	xor	a, a
+;	ld	e, a
+;	ld	d, a
+;	ex	de, hl
+;	sbc	hl, de
+;	ret
 

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  modunsigned.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2009-2010, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -28,10 +28,10 @@
 
 .area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+.globl	__moduchar
+.globl	__moduint
 
-__modschar:
+__moduchar:
         ld      hl,#2+1
         add     hl,sp
 
@@ -39,11 +39,13 @@ __modschar:
         dec     hl
         ld      l,(hl)
 
-        call    __div8
+        call    __divu8
 
-        jp	__get_remainder
+	ex	de,hl
 
-__modsint:
+        ret
+
+__moduint:
         pop     af
         pop     hl
         pop     de
@@ -51,7 +53,9 @@ __modsint:
         push    hl
         push    af
 
-        call    __div16
+        call    __divu16
 
-        jp	__get_remainder
+        ex      de,hl
+
+        ret
 

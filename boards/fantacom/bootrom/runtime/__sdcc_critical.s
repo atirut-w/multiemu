@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  __sdcc_critical.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2020, Sergey Belyashov
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,29 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
-
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
-
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
-
+	.globl ___sdcc_critical_enter
+;
+; NMOS Z80 compatible
+; this function cannot be placed at 0x0000...0x00ff addresses
+;
+___sdcc_critical_enter::
+	xor	a, a
+	push	af
+	pop	af
+	ld	a, i
+	di
+	ret	pe	;enabled interrupts
+	dec	sp
+	dec	sp
+	pop	af
+	or	a, a	;A = 0 if interrupts disabled
+	jr	NZ, 00100$
+;inetrrupts disabled
+	sub	a, a	;force P/V = 0
+	ret
+;interrupts enabled
+00100$:
+	xor	a, a	;force P/V = 1
+	ret

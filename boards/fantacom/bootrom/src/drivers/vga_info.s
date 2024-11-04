@@ -1,3 +1,3 @@
     .section .drivers
 vga_info:
-    .short init_vga
+    .short _init_vga

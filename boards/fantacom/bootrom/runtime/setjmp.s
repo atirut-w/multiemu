@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  setjmp.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2011-2014, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,70 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+	.area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+	.globl ___setjmp
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+___setjmp:
+	pop	hl
+	pop	iy
+	push	af
+	push	hl
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
+	; Store return address.
+	ld	0(iy), l
+	ld	1(iy), h
 
-        call    __div8
+	; Store stack pointer.
+	xor	a, a
+	ld	l, a
+	ld	h, a
+	add	hl, sp
+	ld	2(iy), l
+	ld	3(iy), h
 
-        jp	__get_remainder
+	; Store frame pointer.
+	push	ix
+	pop	hl
+	ld	4(iy), l
+	ld	5(iy), h
 
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
+	; Return 0.
+	ld	l, a
+	ld	h, a
+	ret
 
-        call    __div16
+.globl _longjmp
 
-        jp	__get_remainder
+_longjmp:
+	pop	af
+	pop	iy
+	pop	de
 
+	; Ensure that return value is non-zero.
+	ld	a, e
+	or	a, d
+	jr	NZ, jump
+	inc	de
+jump:
+
+	; Restore frame pointer.
+	ld	l, 4(iy)
+	ld	h, 5(iy)
+	push	hl
+	pop	ix
+
+	; Adjust stack pointer.
+	ld	l, 2(iy)
+	ld	h, 3(iy)
+	ld	sp, hl
+	pop	hl
+
+	; Move return value into hl.
+	ex	de, hl
+
+	; Jump.
+	ld	c, 0(iy)
+	ld	b, 1(iy)
+	push	bc
+	ret

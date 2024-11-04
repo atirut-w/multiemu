@@ -1,4 +1,4 @@
     .section .bss
-    .global vram
-vram:
+    .global _vram
+_vram:
     .fill 80 * 25, 2, 0

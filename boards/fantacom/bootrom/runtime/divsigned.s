@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
 ;  divsigned.s
 ;
-;  Copyright (C) 2000-2021, Michael Hope, Philipp Klaus Krause
+;  Copyright (C) 2000-2010, Michael Hope, Philipp Klaus Krause
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,29 +26,44 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-; .area	_CODE
+.area	_CODE
 
-.globl	_divsint
-.globl	_divschar
-.globl  _div8
-.globl  _div16
-.globl  _get_remainder
+.globl	__divsint
+.globl	__divschar
+.globl  __div_signexte
+.globl  __div8
+.globl	__div16
+.globl	__get_remainder
 
-_divschar:
-	ld	e, l
-	ld	l, a
+__divsint:
+        pop     af
+        pop     hl
+        pop     de
+        push    de
+        push    hl
+        push    af
 
-_div8::
+        jp      __div16
+
+__divschar:
+        ld      hl, #2+1
+        add     hl, sp
+
+        ld      e, (hl)
+        dec     hl
+        ld      l, (hl)
+
+__div8::
         ld      a, l            ; Sign extend
         rlca
         sbc     a,a
         ld      h, a
-_div_signexte::
-	ld      a, e            ; Sign extend
-	rlca
-	sbc     a, a
-	ld      d, a
-	; Fall through to _div16
+__div_signexte::
+        ld      a, e            ; Sign extend
+        rlca
+        sbc     a,a
+        ld      d, a
+        ; Fall through to __div16
 
         ;; signed 16-bit division
         ;;
@@ -57,12 +72,11 @@ _div_signexte::
         ;;   DE = divisor
         ;;
         ;; Exit conditions
-        ;;   DE = quotient
-        ;;   HL = remainder
+        ;;   HL = quotient
+        ;;   DE = remainder
         ;;
         ;; Register used: AF,B,DE,HL
-_divsint:
-_div16::
+__div16::
         ;; Determine sign of quotient by xor-ing high bytes of dividend
         ;;  and divisor. Quotient is positive if signs are the same, negative
         ;;  if signs are different
@@ -76,7 +90,7 @@ _div16::
         ; Take absolute value of dividend
         rla
         jr      NC, .chkde      ; Jump if dividend is positive
-        sub     a, a            ; Subtract dividend from 0
+        sub     a, a            ; Substract dividend from 0
         sub     a, l
         ld      l, a
         sbc     a, a            ; Propagate borrow (A=0xFF if borrow)
@@ -96,7 +110,7 @@ _div16::
 
         ; Divide absolute values
 .dodiv:
-        call    _divu16
+        call    __divu16
 
 .fix_quotient:
         ; Negate quotient if it is negative
@@ -104,24 +118,24 @@ _div16::
         ret	NC		; Jump if quotient is positive
         ld      b, a
         sub     a, a            ; Subtract quotient from 0
-        sub     a, e
-        ld      e, a
+        sub     a, l
+        ld      l, a
         sbc     a, a            ; Propagate borrow (A=0xFF if borrow)
-        sub     a, d
-        ld      d, a
+        sub     a, h
+        ld      h, a
         ld      a, b
 	ret
 
-_get_remainder::
-        ; Negate remainder if it is negative.
+__get_remainder::
+        ; Negate remainder if it is negative and move it into hl
         rla
-        ex	de, hl
+	ex	de, hl
         ret     NC              ; Return if remainder is positive
-        sub     a, a            ; Subtract quotient from 0
-        sub     a, e
-        ld      e, a
-        sbc     a, a            ; Propagate borrow (A=0xFF if borrow)
-        sub     a, d
-        ld      d, a
+        sub     a, a            ; Subtract remainder from 0
+        sub     a, l
+        ld      l, a
+        sbc     a, a             ; Propagate remainder (A=0xFF if borrow)
+        sub     a, h
+        ld      h, a
         ret
 

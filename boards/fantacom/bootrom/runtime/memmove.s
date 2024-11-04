@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------
-;  modsigned.s
+;  memmove.s
 ;
-;  Copyright (C) 2009, Philipp Klaus Krause
+;  Copyright (C) 2008-2009, Philipp Klaus Krause, Marco Bodrato
 ;
 ;  This library is free software; you can redistribute it and/or modify it
 ;  under the terms of the GNU General Public License as published by the
@@ -26,32 +26,40 @@
 ;   might be covered by the GNU General Public License.
 ;--------------------------------------------------------------------------
 
-.area   _CODE
+        .area   _CODE
 
-.globl	__modschar
-.globl	__modsint
+	.globl _memmove
 
-__modschar:
-        ld      hl,#2+1
-        add     hl,sp
+; The Z80 has the ldir and lddr instructions, which are perfect for implementing memmove().
 
-        ld      e,(hl)
-        dec     hl
-        ld      l,(hl)
-
-        call    __div8
-
-        jp	__get_remainder
-
-__modsint:
-        pop     af
-        pop     hl
-        pop     de
-        push    de
-        push    hl
-        push    af
-
-        call    __div16
-
-        jp	__get_remainder
+_memmove:
+	pop	af
+	pop	hl
+	pop	de
+	pop	bc
+	push	bc
+	push	de
+	push	hl
+	push	af
+	ld	a, c
+	or	a, b
+	ret	Z
+	push	hl
+	sbc	hl, de		; or above cleared carry.
+	add	hl, de		; same carry as the line before
+	jr	C, memmove_up
+memmove_down:
+	dec	bc
+	add	hl, bc
+	ex      de, hl
+	add	hl, bc
+	inc	bc
+	lddr
+	pop	hl
+	ret
+memmove_up:
+	ex      de, hl
+	ldir
+	pop	hl
+	ret
 

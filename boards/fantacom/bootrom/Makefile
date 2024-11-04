@@ -25,7 +25,7 @@ LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
 
 # Flags
-CFLAGS := -mz80 -S -I$(SRC_DIR)/include --codeseg .text --constseg .rodata --dataseg .data
+CFLAGS := -mz80 -S -I$(SRC_DIR)/include --opt-code-speed
 ASFLAGS := -I$(SRC_DIR)
 LDFLAGS := -T linker.ld
 
@@ -53,7 +53,7 @@ $(BUILD_DIR) $(OBJ_DIR):
 $(OBJ_DIR)/%.s: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
-	sed -i 's/_\([a-zA-Z0-9_]*\)/\1/g' $@
+	# sed -i 's/_\([a-zA-Z0-9_]*\)/\1/g' $@
 
 $(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s | $(OBJ_DIR)
 	$(AS) -sdcc -o $@ $<
