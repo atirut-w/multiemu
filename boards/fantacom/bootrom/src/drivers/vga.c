@@ -7,6 +7,10 @@
 #define CHARSET_ADDR_PORT 16
 #define SCREEN_ADDR_PORT 20
 
+#define ATTR_DEFAULT 0x07
+#define ATTR_CURSOR 0x70
+#define TAB_SIZE 8
+
 typedef struct VGAChar {
   uint8_t ch;
   uint8_t attr;
@@ -23,17 +27,26 @@ void init_vga() {
 }
 
 int putchar(int ch) {
-  vram[cursor].attr = 0x07;
+  vram[cursor].attr = ATTR_DEFAULT;
 
   switch (ch) {
   default:
     vram[cursor].ch = ch;
     cursor++;
     break;
-  case '\n': {
+  case '\n':
     cursor += WIDTH - cursor % WIDTH;
     break;
-  }
+  case '\r':
+    cursor -= cursor % WIDTH;
+    break;
+  case '\b':
+    if (cursor > 0) {
+      cursor--;
+      vram[cursor].ch = ' ';
+      vram[cursor].attr = ATTR_DEFAULT;
+    }
+    break;
   }
 
   if (cursor >= WIDTH * HEIGHT) {
@@ -42,7 +55,7 @@ int putchar(int ch) {
     cursor = WIDTH * (HEIGHT - 1);
   }
 
-  vram[cursor].attr = 0x70;
+  vram[cursor].attr = ATTR_CURSOR;
   return ch;
 }
 
