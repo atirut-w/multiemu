@@ -7,8 +7,8 @@ char valid[32];
 
 void mmu_init() { memset(valid, 0, sizeof(valid)); }
 
-int mmu_probe() {
-  printf("Probing RAM...\n");
+int mmu_memcheck() {
+  printf("Detecting memory...\n");
   int start = inb(3) + 1;
   int total = 2;
   volatile char *scratch = (char *)0x3000;

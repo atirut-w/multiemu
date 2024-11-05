@@ -1,3 +1,3 @@
 #pragma once
 
-int mmu_probe();
+int mmu_memcheck();
