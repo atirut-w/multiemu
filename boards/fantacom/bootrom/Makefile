@@ -10,13 +10,13 @@ OBJ_DIR := $(BUILD_DIR)/obj
 C_SOURCES := $(shell find $(SRC_DIR) -name '*.c')
 ASM_SOURCES := $(shell find $(SRC_DIR) -name '*.s')
 RUNTIME_SOURCES := $(shell find $(RUNTIME_DIR) -name '*.s')
-SOURCES := $(C_SOURCES) $(ASM_SOURCES)
+SOURCES := $(C_SOURCES) $(ASM_SOURCES) $(RUNTIME_SOURCES)
 
 # Object files
 C_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 RUNTIME_OBJECTS := $(patsubst $(RUNTIME_DIR)/%.s,$(OBJ_DIR)/%.o,$(RUNTIME_SOURCES))
-OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
+OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS) $(RUNTIME_OBJECTS)
 
 # Compiler and tools
 CC := sdcc-sdcc
@@ -31,7 +31,6 @@ LDFLAGS := -T linker.ld
 
 # Main target
 TARGET := $(BUILD_DIR)/bootrom.bin
-RUNTIME := $(BUILD_DIR)/libruntime.a
 
 # === Rules ===
 
@@ -45,8 +44,8 @@ clean:
 $(TARGET): $(BUILD_DIR)/bootrom.elf
 	$(OBJCOPY) -O binary $^ $@
 
-$(BUILD_DIR)/bootrom.elf: $(OBJECTS) | $(BUILD_DIR) $(RUNTIME)
-	$(LD) $(LDFLAGS) -o $@ $^ -L$(BUILD_DIR) -lruntime
+$(BUILD_DIR)/bootrom.elf: $(OBJECTS) | $(BUILD_DIR)
+	$(LD) $(LDFLAGS) -o $@ $^ -L$(BUILD_DIR)
 
 $(BUILD_DIR) $(OBJ_DIR):
 	mkdir -p $@
@@ -62,9 +61,6 @@ $(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s | $(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -o $@ $<
-
-$(RUNTIME): $(RUNTIME_OBJECTS)
-	ar rcs $@ $^
 
 $(OBJ_DIR)/%.o: $(RUNTIME_DIR)/%.s | $(OBJ_DIR)
 	mkdir -p $(dir $@)
