@@ -28,6 +28,7 @@ void FantacomBoard::init(const ArgumentParser &args) {
 
 FantacomBoard::FantacomBoard() {
   cpu.setupCallback(read, write, in, out, this, true);
+  clock_speed = 2500000; // 2.5 MHz
   display = true;
   ram.offset = ROM_SIZE;
   gfx.rambus = &rambus;
