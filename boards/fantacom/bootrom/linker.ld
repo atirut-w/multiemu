@@ -9,13 +9,16 @@ MEMORY
 SECTIONS
 {
     .text : {
-        *(.startup)
         *(.text)
         *(_CODE)
 
         _drivers_start = .;
         *(.drivers)
         _drivers_end = .;
+
+        _initializer_start = .;
+        *(_INITIALIZER)
+        _initializer_end = .;
     } > ROM
 
     .data : {
@@ -23,8 +26,12 @@ SECTIONS
         *(.data)
         *(_DATA)
         _data_end = .;
+        _data_load = LOADADDR(.data);
+
+        _initialized_start = .;
+        *(_INITIALIZED)
+        _initialized_end = .;
     } > RAM AT > ROM
-    _data_load = LOADADDR(.data);
 
     .bss : {
         _bss_start = .;

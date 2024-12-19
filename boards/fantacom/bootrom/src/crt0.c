@@ -8,16 +8,23 @@ extern char data_start[];
 extern char data_end[];
 extern char data_load[];
 
+extern char initializer_start[];
+extern char initializer_end[];
+extern char initialized_start[];
+
 extern char bss_start[];
 extern char bss_end[];
 
 extern DriverInfo drivers_start[];
 extern DriverInfo drivers_end[];
 
+extern int main(int argc, char *argv[]);
+
 void init_data() {
   char *src = data_load;
   char *dst = data_start;
   memcpy(dst, src, data_end - data_start);
+  memcpy(initialized_start, initializer_start, initializer_end - initializer_start);
 }
 
 void init_bss() {
@@ -33,4 +40,11 @@ void init_drivers() {
     driver->init();
     driver++;
   }
+}
+
+void start() {
+  init_data();
+  init_bss();
+  init_drivers();
+  main(0, 0);
 }

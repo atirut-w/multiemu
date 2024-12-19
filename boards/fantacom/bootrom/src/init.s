@@ -1,9 +1,10 @@
-    .section .startup
+    .org 0x0000
     .equ PAGETABLE, 0
+    .global _start
 
     
-    .global _start
-_start:
+    .global init
+init:
     ld hl, 0x3000
     ld sp, hl
     ; Set up ROM mapping (2 pages)
@@ -43,10 +44,7 @@ _start:
 2:
     ld hl, 0x4000
     ld sp, hl
-    call _init_data
-    call _init_bss
-    call _init_drivers
-    call _main
+    call _start
     jr _hang
 
 _hang:

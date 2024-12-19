@@ -18,10 +18,9 @@ typedef struct VGAChar {
 
 extern char font[];
 extern VGAChar vram[80 * 25];
-int cursor;
+int cursor = 0;
 
 void init_vga() {
-  cursor = 0;
   outl(CHARSET_ADDR_PORT, (uint32_t)font & 0xffff);
   outl(SCREEN_ADDR_PORT, (uint32_t)vram & 0xffff);
 }
