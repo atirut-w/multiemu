@@ -12,26 +12,22 @@ using namespace argparse;
 using namespace MultiEmu;
 
 unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
-  auto board = make_unique<FantacomBoard>();
+  auto board = make_unique<FantacomBoard>(args);
   return board;
 }
 REGISTER_BOARD(fantacom, create_fantacom);
 
-void FantacomBoard::init(const ArgumentParser &args) {
-  rom.data = Utils::load_rom(args.get<filesystem::path>("program"));
-  rom.data.resize(ROM_SIZE);
-  ram.data.resize(args.get<int>("--ram"));
-  mmu.pagemap.fill(0);
-
-  gfx.init(args);
-}
-
-FantacomBoard::FantacomBoard() {
+FantacomBoard::FantacomBoard(const ArgumentParser &args) {
   cpu.setupCallback(read, write, in, out, this, true);
   display = true;
   ram.offset = ROM_SIZE;
   gfx.rambus = &rambus;
   gfx.offset = 16;
+  
+  rom.data = Utils::load_rom(args.get<filesystem::path>("program"));
+  rom.data.resize(ROM_SIZE);
+  ram.data.resize(args.get<int>("--ram"));
+  mmu.pagemap.fill(0);
 
   rambus.add_listener(&rom);
   rambus.add_listener(&ram);
