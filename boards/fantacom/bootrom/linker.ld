@@ -12,9 +12,9 @@ SECTIONS
         *(.text)
         *(_CODE)
 
-        _drivers_start = .;
-        *(.drivers)
-        _drivers_end = .;
+        _modules_start = .;
+        *(.modules)
+        _modules_end = .;
 
         _initializer_start = .;
         *(_INITIALIZER)

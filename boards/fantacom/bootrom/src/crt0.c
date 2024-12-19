@@ -15,8 +15,8 @@ extern char initialized_start[];
 extern char bss_start[];
 extern char bss_end[];
 
-extern DriverInfo drivers_start[];
-extern DriverInfo drivers_end[];
+extern DriverInfo modules_start[];
+extern DriverInfo modules_end[];
 
 extern int main(int argc, char *argv[]);
 
@@ -34,9 +34,9 @@ void init_bss() {
   }
 }
 
-void init_drivers() {
-  DriverInfo *driver = drivers_start;
-  while (driver < drivers_end) {
+void init_modules() {
+  DriverInfo *driver = modules_start;
+  while (driver < modules_end) {
     driver->init();
     driver++;
   }
@@ -45,6 +45,6 @@ void init_drivers() {
 void start() {
   init_data();
   init_bss();
-  init_drivers();
+  init_modules();
   main(0, 0);
 }
