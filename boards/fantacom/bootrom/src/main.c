@@ -5,6 +5,6 @@
 
 int main() {
   printf("Fantacom boot ROM, (C) Atirut Wattanamongkol and contributors\n\n");
-  mmu_memcheck();
+  printf("Total memory: %d KiB\n", mmu_get_total_memory());
   return 0;
 }
