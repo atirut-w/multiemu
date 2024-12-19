@@ -18,10 +18,6 @@ struct Board : public Device {
   virtual void draw() {}
 };
 
-struct BoardSpec {
-  bool display = false;
-};
-
 struct BoardInfo {
   std::string name;
   std::unique_ptr<Board> (*create)(const argparse::ArgumentParser &args);
