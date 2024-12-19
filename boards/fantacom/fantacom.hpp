@@ -12,7 +12,7 @@
 
 class FantacomBoard : public MultiEmu::Board {
 public:
-  FantacomBoard();
+  FantacomBoard(const argparse::ArgumentParser &args);
 
   Z80 cpu;
   Graphics gfx;
@@ -23,7 +23,6 @@ public:
   MultiEmu::Bus<uint8_t> rambus;
   MultiEmu::Bus<uint8_t> io;
 
-  virtual void init(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;
   virtual void draw() override;
   

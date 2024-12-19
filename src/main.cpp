@@ -76,7 +76,6 @@ int main(int argc, const char *argv[]) {
   if (board->display) {
     Display::init(640, 400);
   }
-  board->init(*args);
 
   int bias = 0;
   while (true) {
