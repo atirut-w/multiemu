@@ -10,7 +10,7 @@ void mmu_init() {
   memset(valid, 0, sizeof(valid));
   int start = inb(3) + 1;
   int total = 2;
-  volatile char *scratch = (char *)0x3000;
+  volatile char *scratch = (char *)0x4000;
 
   for (int i = start; i < 256; i++) {
     outb(4, i);
