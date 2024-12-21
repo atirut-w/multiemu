@@ -26,21 +26,11 @@ array<Color, 16> palette = {
     {255, 255, 255, 255}  // White
 };
 
-uint8_t Graphics::read(std::size_t addr) {
-  return addr < data.size() ? data[addr] : 0;
-}
-
-void Graphics::write(std::size_t addr, uint8_t data) {
-  if (addr < this->data.size()) {
-    this->data[addr] = data;
-  }
-}
-
 void Graphics::draw() {
-  auto charset_addr = *(uint32_t *)&data[0];
+  auto charset_addr = *(uint32_t *)&config.data[0];
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
-    auto char_row = rambus->read(charset_addr++);
+    auto char_row = ram->read(charset_addr++);
     for (int col = 0; col < 8; col++) {
       auto bit = (char_row >> (7 - col)) & 1;
       ImageDrawPixel(&charset_img, col, row, bit ? WHITE : Color{0, 0, 0, 0});
@@ -54,11 +44,11 @@ void Graphics::draw() {
   ClearBackground(BLACK);
 
   // 80x25, 8x16
-  auto vram_addr = *(uint32_t *)&data[4];
+  auto vram_addr = *(uint32_t *)&config.data[4];
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
-      auto char_index = rambus->read(vram_addr++);
-      auto char_attr = rambus->read(vram_addr++);
+      auto char_index = ram->read(vram_addr++);
+      auto char_attr = ram->read(vram_addr++);
       auto fg = palette[char_attr & 0x0f];
       auto bg = palette[char_attr >> 4];
 

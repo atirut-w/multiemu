@@ -3,9 +3,8 @@
 #include "fantacom/graphics.hpp"
 #include "fantacom/mmu.hpp"
 #include "multiemu/board.hpp"
-#include "multiemu/bus.hpp"
-#include "multiemu/ram.hpp"
-#include "multiemu/rom.hpp"
+#include "multiemu/memory_region.hpp"
+#include "multiemu/units.hpp"
 #include "z80.hpp"
 #include <cstdint>
 #include <vector>
@@ -16,12 +15,12 @@ public:
 
   Z80 cpu;
   Graphics gfx;
-  MultiEmu::ROM rom;
-  MultiEmu::RAM ram;
-  MMU mmu;
-
-  MultiEmu::Bus<uint8_t> rambus;
-  MultiEmu::Bus<uint8_t> io;
+  
+  MultiEmu::MemoryRegionContainer phys = MultiEmu::MemoryRegionContainer(MIB);
+  MemoryRegionMMU virt;
+  MultiEmu::MemoryRegionContainer io = MultiEmu::MemoryRegionContainer(64 * KIB);
+  MultiEmu::MemoryRegionRAM ram;
+  MultiEmu::MemoryRegionROM rom = MultiEmu::MemoryRegionROM(8 * KIB);
 
   virtual int run(int cycles) override;
   virtual void draw() override;

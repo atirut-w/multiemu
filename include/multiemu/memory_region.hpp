@@ -7,12 +7,12 @@
 namespace MultiEmu {
 
 class MemoryRegion {
-  std::size_t size;
   int priority;
   std::vector<MemoryRegion *> subregions;
 
 public:
   std::size_t offset;
+  std::size_t size;
 
   MemoryRegion(std::size_t size) : size(size) {};
 
@@ -33,9 +33,9 @@ public:
 };
 
 class MemoryRegionRAM : public MemoryRegion {
+public:
   std::vector<uint8_t> data;
 
-public:
   MemoryRegionRAM(std::size_t size) : MemoryRegion(size), data(size) {};
 
   uint8_t read(std::size_t addr) override;
@@ -43,10 +43,10 @@ public:
 };
 
 class MemoryRegionROM : public MemoryRegion {
+public:
   std::vector<uint8_t> data;
 
-public:
-  MemoryRegionROM(const std::vector<uint8_t> &data) : MemoryRegion(data.size()), data(data) {};
+  MemoryRegionROM(std::size_t size) : MemoryRegion(size), data(size) {};
 
   uint8_t read(std::size_t addr) override;
   void write(std::size_t addr, uint8_t value) override;

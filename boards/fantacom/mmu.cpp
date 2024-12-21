@@ -1,20 +1,16 @@
 #include "fantacom/mmu.hpp"
 #include <cstdint>
 
-uint8_t MMU::read(std::size_t addr) {
-  if (addr < 16) {
-    return pagemap[addr];
-  }
-  return 0;
+uint8_t MemoryRegionMMU::read(std::size_t addr) {
+  int v_page = addr >> 12;
+  int p_page = config.read(v_page);
+  int p_addr = (p_page << 12) | (addr & 0xfff);
+  return physical->read(p_addr);
 }
 
-void MMU::write(std::size_t addr, uint8_t data) {
-  if (addr < 16) {
-    pagemap[addr] = data;
-  }
-}
-
-std::uint32_t MMU::translate(std::uint32_t addr) {
-  int page = addr >> 12;
-  return (pagemap[page] << 12) | (addr & 0xfff);
+void MemoryRegionMMU::write(std::size_t addr, uint8_t data) {
+  int v_page = addr >> 12;
+  int p_page = config.read(v_page);
+  int p_addr = (p_page << 12) | (addr & 0xfff);
+  physical->write(p_addr, data);
 }
