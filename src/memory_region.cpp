@@ -29,10 +29,8 @@ void MemoryRegion::add_subregion(MemoryRegion *region, size_t offset, int priori
   region->offset = offset;
   region->priority = priority;
   subregions.push_back(region);
-  // Sort subregions by descending priority
-  sort(subregions.begin(), subregions.end(), [](MemoryRegion *a, MemoryRegion *b) {
-    return a->priority > b->priority;
-  });
+  sort(subregions.begin(), subregions.end(),
+       [](MemoryRegion *a, MemoryRegion *b) { return a->priority > b->priority; });
 }
 
 void MemoryRegion::remove_subregion(MemoryRegion *region) {
@@ -55,3 +53,44 @@ MemoryRegion *MemoryRegion::resolve_address(size_t addr) {
   }
   return this;
 }
+
+uint8_t MemoryRegionContainer::read(size_t addr) {
+  auto region = resolve_address(addr);
+  if (region != this) {
+    return region->read(addr - region->offset);
+  }
+  return 0;
+}
+
+void MemoryRegionContainer::write(size_t addr, uint8_t value) {
+  auto region = resolve_address(addr);
+  if (region != this) {
+    region->write(addr - region->offset, value);
+  }
+}
+
+uint8_t MemoryRegionRAM::read(size_t addr) {
+  auto region = resolve_address(addr);
+  if (region != this) {
+    return region->read(addr - region->offset);
+  }
+  return data[addr];
+}
+
+void MemoryRegionRAM::write(size_t addr, uint8_t value) {
+  auto region = resolve_address(addr);
+  if (region != this) {
+    region->write(addr - region->offset, value);
+  }
+  data[addr] = value;
+}
+
+uint8_t MemoryRegionROM::read(size_t addr) { return data[addr]; }
+
+void MemoryRegionROM::write(size_t addr, uint8_t value) {
+  // NOP
+}
+
+uint8_t MemoryRegionMMIO::read(size_t addr) { return ops.read(addr); }
+
+void MemoryRegionMMIO::write(size_t addr, uint8_t value) { ops.write(addr, value); }
