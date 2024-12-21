@@ -6,9 +6,9 @@
 using namespace std;
 using namespace MultiEmu;
 
-uint8_t MemoryRegion::read(size_t addr) const {
+uint8_t MemoryRegion::read(size_t addr) {
   auto region = resolve_address(addr);
-  if (!region) {
+  if (region == this) {
     throw out_of_range("address not mapped");
   }
   return region->read(addr - region->offset);
@@ -16,7 +16,7 @@ uint8_t MemoryRegion::read(size_t addr) const {
 
 void MemoryRegion::write(size_t addr, uint8_t value) {
   auto region = resolve_address(addr);
-  if (!region) {
+  if (region == this) {
     throw out_of_range("address not mapped");
   }
   region->write(addr - region->offset, value);
@@ -43,7 +43,7 @@ void MemoryRegion::remove_subregion(MemoryRegion *region) {
   subregions.erase(it);
 }
 
-MemoryRegion *MemoryRegion::resolve_address(size_t addr) const {
+MemoryRegion *MemoryRegion::resolve_address(size_t addr) {
   if (addr >= size) {
     throw out_of_range("address out of range");
   }
@@ -53,5 +53,5 @@ MemoryRegion *MemoryRegion::resolve_address(size_t addr) const {
       return region->resolve_address(rel);
     }
   }
-  return nullptr;
+  return this;
 }
