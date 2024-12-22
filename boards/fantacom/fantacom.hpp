@@ -16,9 +16,9 @@ public:
   Z80 cpu;
   Graphics gfx;
   
-  MultiEmu::MemoryRegionContainer phys = MultiEmu::MemoryRegionContainer(MIB);
+  MultiEmu::MemoryRegion phys = MultiEmu::MemoryRegion(MIB);
   MemoryRegionMMU virt;
-  MultiEmu::MemoryRegionContainer io = MultiEmu::MemoryRegionContainer(64 * KIB);
+  MultiEmu::MemoryRegion io = MultiEmu::MemoryRegion(64 * KIB);
   MultiEmu::MemoryRegionRAM ram;
   MultiEmu::MemoryRegionROM rom = MultiEmu::MemoryRegionROM(8 * KIB);
 

@@ -24,14 +24,6 @@ public:
   MemoryRegion *resolve_address(std::size_t addr);
 };
 
-class MemoryRegionContainer : public MemoryRegion {
-public:
-  MemoryRegionContainer(std::size_t size) : MemoryRegion(size) {};
-
-  uint8_t read(std::size_t addr) override;
-  void write(std::size_t addr, uint8_t value) override;
-};
-
 class MemoryRegionRAM : public MemoryRegion {
 public:
   std::vector<uint8_t> data;

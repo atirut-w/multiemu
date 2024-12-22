@@ -54,21 +54,6 @@ MemoryRegion *MemoryRegion::resolve_address(size_t addr) {
   return this;
 }
 
-uint8_t MemoryRegionContainer::read(size_t addr) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    return region->read(addr - region->offset);
-  }
-  return 0;
-}
-
-void MemoryRegionContainer::write(size_t addr, uint8_t value) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    region->write(addr - region->offset, value);
-  }
-}
-
 uint8_t MemoryRegionRAM::read(size_t addr) {
   auto region = resolve_address(addr);
   if (region != this) {
