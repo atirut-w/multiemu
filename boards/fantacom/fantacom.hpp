@@ -1,12 +1,13 @@
 #pragma once
 #include "argparse/argparse.hpp"
 #include "fantacom/graphics.hpp"
-#include "fantacom/mmu.hpp"
 #include "multiemu/board.hpp"
 #include "multiemu/memory_region.hpp"
 #include "multiemu/units.hpp"
 #include "z80.hpp"
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 class FantacomBoard : public MultiEmu::Board {
@@ -15,12 +16,13 @@ public:
 
   Z80 cpu;
   Graphics gfx;
-  
-  MultiEmu::MemoryRegion phys = MultiEmu::MemoryRegion(MIB);
-  MemoryRegionMMU virt;
-  MultiEmu::MemoryRegion io = MultiEmu::MemoryRegion(64 * KIB);
-  MultiEmu::MemoryRegionRAM ram;
-  MultiEmu::MemoryRegionROM rom = MultiEmu::MemoryRegionROM(8 * KIB);
+
+  std::unique_ptr<MultiEmu::MemoryRegion> phys;
+  std::unique_ptr<MultiEmu::MemoryRegion> io;
+  std::unique_ptr<MultiEmu::MemoryRegionRAM> ram;
+  std::unique_ptr<MultiEmu::MemoryRegionROM> rom;
+
+  MultiEmu::MemoryRegionRAM mmu_config = MultiEmu::MemoryRegionRAM(16);
 
   virtual int run(int cycles) override;
   virtual void draw() override;
