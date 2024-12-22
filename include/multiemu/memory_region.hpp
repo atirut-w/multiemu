@@ -7,12 +7,14 @@
 namespace MultiEmu {
 
 class MemoryRegion {
-  std::size_t size;
+protected:
   int priority;
+  bool backed = false;
   std::vector<MemoryRegion *> subregions;
 
 public:
   std::size_t offset;
+  std::size_t size;
 
   MemoryRegion(std::size_t size) : size(size) {};
 
@@ -21,32 +23,24 @@ public:
 
   void add_subregion(MemoryRegion *region, std::size_t offset, int priority = 0);
   void remove_subregion(MemoryRegion *region);
-  MemoryRegion *resolve_address(std::size_t addr);
-};
-
-class MemoryRegionContainer : public MemoryRegion {
-public:
-  MemoryRegionContainer(std::size_t size) : MemoryRegion(size) {};
-
-  uint8_t read(std::size_t addr) override;
-  void write(std::size_t addr, uint8_t value) override;
+  virtual MemoryRegion *resolve_address(std::size_t addr);
 };
 
 class MemoryRegionRAM : public MemoryRegion {
+public:
   std::vector<uint8_t> data;
 
-public:
-  MemoryRegionRAM(std::size_t size) : MemoryRegion(size), data(size) {};
+  MemoryRegionRAM(std::size_t size) : MemoryRegion(size), data(size) { backed = true; };
 
   uint8_t read(std::size_t addr) override;
   void write(std::size_t addr, uint8_t value) override;
 };
 
 class MemoryRegionROM : public MemoryRegion {
+public:
   std::vector<uint8_t> data;
 
-public:
-  MemoryRegionROM(const std::vector<uint8_t> &data) : MemoryRegion(data.size()), data(data) {};
+  MemoryRegionROM(std::size_t size) : MemoryRegion(size), data(size) { backed = true; };
 
   uint8_t read(std::size_t addr) override;
   void write(std::size_t addr, uint8_t value) override;
@@ -62,7 +56,7 @@ class MemoryRegionMMIO : public MemoryRegion {
   MMIOOps ops;
 
 public:
-  MemoryRegionMMIO(std::size_t size, MMIOOps ops) : MemoryRegion(size), ops(ops) {};
+  MemoryRegionMMIO(std::size_t size, MMIOOps ops) : MemoryRegion(size), ops(ops) { backed = true; };
 
   uint8_t read(std::size_t addr) override;
   void write(std::size_t addr, uint8_t value) override;

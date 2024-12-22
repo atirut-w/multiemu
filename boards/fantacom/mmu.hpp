@@ -1,12 +1,15 @@
 #pragma once
-#include "multiemu/bus_device.hpp"
+#include "multiemu/memory_region.hpp"
+#include "multiemu/units.hpp"
 #include <array>
 #include <cstdint>
 
-struct MMU : MultiEmu::BusDevice<uint8_t> {
-  std::array<std::uint8_t, 16> pagemap;
+struct MemoryRegionMMU : MultiEmu::MemoryRegion {
+  MultiEmu::MemoryRegionRAM config;
+  MultiEmu::MemoryRegion *physical;
 
-  std::uint8_t read(std::size_t addr) override;
-  void write(std::size_t addr, std::uint8_t data) override;
-  std::uint32_t translate(std::uint32_t addr);
+  MemoryRegionMMU() : MultiEmu::MemoryRegion(64 * KIB), config(16) {};
+
+  uint8_t read(size_t addr) override;
+  void write(size_t addr, uint8_t value) override;
 };
