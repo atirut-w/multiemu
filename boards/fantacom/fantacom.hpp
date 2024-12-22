@@ -3,12 +3,9 @@
 #include "fantacom/graphics.hpp"
 #include "multiemu/board.hpp"
 #include "multiemu/memory_region.hpp"
-#include "multiemu/units.hpp"
 #include "z80.hpp"
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <vector>
 
 class FantacomBoard : public MultiEmu::Board {
 public:

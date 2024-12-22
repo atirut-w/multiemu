@@ -1,9 +1,6 @@
 #pragma once
 #include "multiemu/memory_region.hpp"
-#include "raylib.h"
-#include <array>
 #include <cstdint>
-#include <optional>
 
 struct Graphics {
   MultiEmu::MemoryRegionRAM config;
