@@ -10,7 +10,7 @@ using namespace MultiEmu;
 uint8_t MemoryRegion::read(size_t addr) {
   auto region = resolve_address(addr);
   if (!region) {
-    cout << "WARN: read from invalid address " << addr << endl;
+    cout << "WARN: read from invalid address " << addr << "\n";
     return 0;
   }
   return region->read(addr - region->offset);
@@ -21,7 +21,7 @@ void MemoryRegion::write(size_t addr, uint8_t value) {
   if (region) {
     region->write(addr - region->offset, value);
   } else {
-    cout << "WARN: write to invalid address " << addr << endl;
+    cout << "WARN: write to invalid address " << addr << "\n";
   }
 }
 
