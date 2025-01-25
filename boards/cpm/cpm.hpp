@@ -6,11 +6,12 @@
 
 class CPMBoard : public MultiEmu::Board {
 
+  virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;
 
 public:
-  CPMBoard();
-  
+  CPMBoard() { name = "cpm"; }
+
   Z80 cpu;
   bool running = true;
   std::array<uint8_t, 0x10000> memory;

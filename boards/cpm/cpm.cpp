@@ -1,5 +1,6 @@
 #include "cpm.hpp"
 #include "argparse/argparse.hpp"
+#include "multiemu/board_registry.hpp"
 #include "multiemu/utils.hpp"
 #include <algorithm>
 #include <cstdint>
@@ -15,18 +16,7 @@ using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
 
-unique_ptr<Board> create_cpm(const ArgumentParser &args) {
-  auto board = make_unique<CPMBoard>();
-  ifstream rom(args.get<filesystem::path>("program"), ios::binary);
-  auto romv = Utils::load_rom(args.get<filesystem::path>("program"));
-  
-  for (int i = 0; i < min(0x10000, static_cast<int>(romv.size())); i++)
-  {
-    board->memory[i] = romv[i];
-  }
-
-  return board;
-}
+static BoardRegistry::Register<CPMBoard> registration;
 
 CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }
 
@@ -68,7 +58,15 @@ void write(void *ctx, uint16_t address, uint8_t value) {
   static_cast<CPMBoard *>(ctx)->memory[address] = value;
 }
 
-CPMBoard::CPMBoard() {
+void CPMBoard::setup(const ArgumentParser &args) {
+  ifstream rom(args.get<filesystem::path>("program"), ios::binary);
+  auto romv = Utils::load_rom(args.get<filesystem::path>("program"));
+  
+  for (int i = 0; i < min(0x10000, static_cast<int>(romv.size())); i++)
+  {
+    memory[i] = romv[i];
+  }
+
   cpu.reg.PC = 0x100;
   cpu.reg.SP = 0;
 
@@ -83,5 +81,3 @@ int CPMBoard::run(int cycles) {
     return 0;
   }
 }
-
-REGISTER_BOARD(cpm, create_cpm)

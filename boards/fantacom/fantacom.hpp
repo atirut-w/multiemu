@@ -9,7 +9,7 @@
 
 class FantacomBoard : public MultiEmu::Board {
 public:
-  FantacomBoard(const argparse::ArgumentParser &args);
+  FantacomBoard() { name = "fantacom"; }
 
   Z80 cpu;
   Graphics gfx;
@@ -21,6 +21,7 @@ public:
 
   MultiEmu::MemoryRegionRAM mmu_config = MultiEmu::MemoryRegionRAM(16);
 
+  virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;
   virtual void draw() override;
   

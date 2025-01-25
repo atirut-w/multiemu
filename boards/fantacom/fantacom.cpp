@@ -1,6 +1,7 @@
 #include "fantacom/fantacom.hpp"
 #include "argparse/argparse.hpp"
 #include "multiemu/board.hpp"
+#include "multiemu/board_registry.hpp"
 #include "multiemu/units.hpp"
 #include "multiemu/utils.hpp"
 #include <algorithm>
@@ -14,13 +15,9 @@ using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
 
-unique_ptr<Board> create_fantacom(const ArgumentParser &args) {
-  auto board = make_unique<FantacomBoard>(args);
-  return board;
-}
-REGISTER_BOARD(fantacom, create_fantacom);
+static BoardRegistry::Register<FantacomBoard> registration;
 
-FantacomBoard::FantacomBoard(const ArgumentParser &args) {
+void FantacomBoard::setup(const ArgumentParser &args) {
   cpu.setupCallback(read, write, in, out, this, true);
   clock_speed = 2500000; // 2.5 MHz
   display = true;

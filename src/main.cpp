@@ -2,7 +2,7 @@
 #include "raylib.h"
 #include <algorithm>
 #include <argparse/argparse.hpp>
-#include <board_registry.hpp>
+#include <multiemu/board_registry.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -49,7 +49,7 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
 
 void list_boards() {
   cout << "Available boards:" << endl;
-  for (const auto *board : BoardRegistry::get_board_infos()) {
+  for (const auto *board : BoardRegistry::get_boards()) {
     cout << "\t" << board->name << endl;
   }
 }
@@ -65,14 +65,14 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  auto board_info = BoardRegistry::get_board_info(args->get<string>("board"));
-  if (!board_info) {
+  auto *board = BoardRegistry::get_board(args->get<string>("board"));
+  if (!board) {
     cerr << "Board not found: " << args->get<string>("board") << endl;
     list_boards();
     return 1;
   }
-
-  auto board = board_info->create(*args);
+  
+  board->setup(*args);
   if (board->display) {
     Display::init(640, 400);
   }
