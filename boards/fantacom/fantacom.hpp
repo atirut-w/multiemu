@@ -3,6 +3,8 @@
 #include "fantacom/graphics.hpp"
 #include "multiemu/board.hpp"
 #include "multiemu/memory_region.hpp"
+#include "multiemu/memory_space.hpp"
+#include "multiemu/units.hpp"
 #include "z80.hpp"
 #include <cstdint>
 #include <memory>
@@ -14,8 +16,9 @@ public:
   Z80 cpu;
   Graphics gfx;
 
-  std::unique_ptr<MultiEmu::MemoryRegion> phys;
-  std::unique_ptr<MultiEmu::MemoryRegion> io;
+  std::unique_ptr<MultiEmu::MemorySpace> phys;
+  std::unique_ptr<MultiEmu::MemorySpace> io;
+
   std::unique_ptr<MultiEmu::MemoryRegionRAM> ram;
   std::unique_ptr<MultiEmu::MemoryRegionROM> rom;
 
