@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
 
 #define ROM_SIZE 0x2000
 
@@ -39,7 +40,14 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   io->add_region(&gfx.config, 16, 0);
 }
 
-int FantacomBoard::run(int cycles) { return cpu.execute(cycles); }
+int FantacomBoard::run(int cycles) {
+  try {
+    return cpu.execute(cycles);
+  } catch (const runtime_error &e) {
+    cerr << "Error in CPU: " << e.what() << endl;
+    return -1;
+  }
+}
 
 void FantacomBoard::draw() { gfx.draw(); }
 
