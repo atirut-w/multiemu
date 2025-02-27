@@ -17,7 +17,7 @@ _init:
     ; Find some free pages
     ld bc, PAGETABLE + 2    ; Virtual-to-physical remap registers
     ld hl, 0x2000           ; Virtual page address
-    ld d, 2                 ; First physical page to test
+    ld d, 128               ; First physical page to test
     ld e, 2                 ; Number of contiguous pages we want
 0:
     out (c), d
