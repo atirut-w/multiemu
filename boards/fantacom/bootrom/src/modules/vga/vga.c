@@ -25,6 +25,8 @@ int cursor = 0;
 __attribute__((constructor)) void vga_init(void) {
   out32(CHARSET_ADDR_PORT, mmu_get_physical(font));
   out32(SCREEN_ADDR_PORT, mmu_get_physical(vram));
+
+  vram[cursor].attr = ATTR_CURSOR;
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
