@@ -10,10 +10,15 @@ SECTIONS {
     } > ROM
 
     .data : {
+        ___data_start = .;
         *(.data)
+        ___data_end = .;
+        ___data_load = LOADADDR(.data);
     } > RAM AT > ROM
 
     .bss : {
+        ___bss_start = .;
         *(.bss)
+        ___bss_end = .;
     } > RAM
 }
