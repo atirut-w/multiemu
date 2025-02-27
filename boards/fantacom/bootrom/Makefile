@@ -18,8 +18,8 @@ LDFLAGS := -T linker.ld
 LDLIBS := -L$(PREFIX)/lib -lc
 
 # Source files
-CSRC := $(wildcard $(SRCDIR)/*.c)
-ASRC := $(wildcard $(SRCDIR)/*.s)
+CSRC := $(shell find $(SRCDIR) -name '*.c')
+ASRC := $(shell find $(SRCDIR) -name '*.s')
 
 # Object files
 COBJ := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CSRC))
@@ -57,4 +57,5 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 	$(AS) $(ASFLAGS) -march=ez80 -o $@ $<
 
 $(OBJDIR)/%.s: $(SRCDIR)/%.c | $(OBJDIR)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<

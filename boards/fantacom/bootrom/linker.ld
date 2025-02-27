@@ -9,6 +9,14 @@ SECTIONS {
         *(.text)
     } > ROM
 
+    .rodata : {
+        *(.rodata)
+
+        ___init_array_start = .;
+        KEEP(*(.init_array))
+        ___init_array_end = .;
+    } > ROM
+
     .data : {
         ___data_start = .;
         *(.data)
