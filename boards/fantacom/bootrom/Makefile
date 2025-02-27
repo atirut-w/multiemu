@@ -11,7 +11,7 @@ LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
 
 # Compiler flags
-INCLUDE := -I$(PREFIX)/include -I$(SRCDIR)/include -I$(SRCDIR)
+INCLUDE := -I$(PREFIX)/include -I$(SRCDIR)/include -I$(SRCDIR) -I$(SRCDIR)/modules
 CFLAGS := -target z80 -S -nostdinc --std=c90 -pedantic-errors -Os -mllvm -z80-gas-style $(INCLUDE)
 ASFLAGS := $(INCLUDE)
 LDFLAGS := -T linker.ld

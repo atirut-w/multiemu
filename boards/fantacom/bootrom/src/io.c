@@ -9,8 +9,6 @@ __attribute__((naked)) uint8_t in(uint16_t address) {
     "ld c, (ix + 4)\n"
     "ld b, (ix + 5)\n"
     "in a, (c)\n"
-
-    "ld l, a\n"
     
     "ld sp, ix\n"
     "pop ix\n"
