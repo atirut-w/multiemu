@@ -3,7 +3,7 @@
     
     .globl _init
 _init:
-    ld hl, 0x4000
+    ld hl, 0x3000
     ld sp, hl
     ; Set up ROM mapping (2 pages)
     ld bc, 0
