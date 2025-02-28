@@ -48,7 +48,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
     case '\b':
       /* Backspace */
       if (cursor > 0) {
-      cursor--;
+        cursor--;
       }
       break;
     case '\t':
@@ -61,7 +61,8 @@ ssize_t write(int fd, const void *buf, size_t count) {
       break;
     case '\f':
       /* Form feed */
-      cursor = cursor % WIDTH;
+      memset(vram, 0, WIDTH * HEIGHT * sizeof(VGAChar));
+      cursor = 0;
       break;
     case '\r':
       /* Carriage return */
