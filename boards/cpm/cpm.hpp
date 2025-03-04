@@ -5,12 +5,9 @@
 #include <cstdint>
 
 class CPMBoard : public MultiEmu::Board {
-
+public:
   virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;
-
-public:
-  CPMBoard() { name = "cpm"; }
 
   Z80 cpu;
   bool running = true;

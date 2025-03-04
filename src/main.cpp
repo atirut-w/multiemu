@@ -49,8 +49,8 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
 
 void list_boards() {
   cout << "Available boards:" << endl;
-  for (const auto *board : BoardRegistry::get_boards()) {
-    cout << "\t" << board->name << endl;
+  for (const auto &[name, info] : BoardRegistry::get_board_infos()) {
+    cout << "\t" << name << "\t" << info.description << endl;
   }
 }
 
@@ -65,7 +65,7 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  auto *board = BoardRegistry::get_board(args->get<string>("board"));
+  auto board = BoardRegistry::create_board(args->get<string>("board"));
   if (!board) {
     cerr << "Board not found: " << args->get<string>("board") << endl;
     list_boards();

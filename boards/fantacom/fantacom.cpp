@@ -17,7 +17,7 @@ using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
 
-static BoardRegistry::Register<FantacomBoard> registration;
+static BoardRegistry::Register<FantacomBoard> registration("fantacom", "Z80-based fantasy computer");
 
 void FantacomBoard::setup(const ArgumentParser &args) {
   cpu.setupCallback(read, write, in, out, this, true);

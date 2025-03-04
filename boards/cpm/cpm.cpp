@@ -16,7 +16,7 @@ using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
 
-static BoardRegistry::Register<CPMBoard> registration;
+static BoardRegistry::Register<CPMBoard> registration("cpm", "CP/M userland emulation with Z80 processor");
 
 CPMBoard *get_self(void *self) { return static_cast<CPMBoard *>(self); }
 

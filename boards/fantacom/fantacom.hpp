@@ -11,8 +11,6 @@
 
 class FantacomBoard : public MultiEmu::Board {
 public:
-  FantacomBoard() { name = "fantacom"; }
-
   Z80 cpu;
   Graphics gfx;
 

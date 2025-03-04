@@ -5,17 +5,26 @@ using namespace std;
 using namespace argparse;
 using namespace MultiEmu;
 
-vector<Board *> BoardRegistry::boards;
+unordered_map<string, BoardRegistry::BoardInfo> BoardRegistry::board_infos;
 
-const vector<Board *> &BoardRegistry::get_boards() {
-  return boards;
+const unordered_map<string, BoardRegistry::BoardInfo>& BoardRegistry::get_board_infos() {
+  return board_infos;
 }
 
-Board *BoardRegistry::get_board(const string &name) {
-  for (auto *board : boards) {
-    if (board->name == name) {
-      return board;
-    }
+vector<string> BoardRegistry::get_board_names() {
+  vector<string> names;
+  names.reserve(board_infos.size());
+  
+  for (const auto& [name, _] : board_infos) {
+    names.push_back(name);
+  }
+  return names;
+}
+
+unique_ptr<Board> BoardRegistry::create_board(const string &name) {
+  auto it = board_infos.find(name);
+  if (it != board_infos.end()) {
+    return it->second.factory();
   }
   return nullptr;
 }

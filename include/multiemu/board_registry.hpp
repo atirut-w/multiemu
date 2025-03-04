@@ -1,27 +1,57 @@
 #pragma once
 #include "argparse/argparse.hpp"
 #include "multiemu/board.hpp"
+#include <functional>
+#include <memory>
+#include <unordered_map>
 #include <vector>
-
-// namespace MultiEmu::BoardRegistry {
-// std::vector<BoardInfo *> get_board_infos();
-// BoardInfo * get_board_info(const std::string &name);
-// } // namespace BoardRegistry
+#include <string>
 
 namespace MultiEmu {
 
 class BoardRegistry {
-  static std::vector<Board *> boards;
+public:
+  // Board information structure
+  struct BoardInfo {
+    std::string description;
+    std::function<std::unique_ptr<Board>()> factory;
+  };
+  
+private:
+  // Map of board names to their info
+  static std::unordered_map<std::string, BoardInfo> board_infos;
 
 public:
-  static const std::vector<Board *> &get_boards();
-  static Board *get_board(const std::string &name);
+  /**
+   * Get a read-only reference to all board infos
+   * @return Const reference to the board info map
+   */
+  static const std::unordered_map<std::string, BoardInfo>& get_board_infos();
+  
+  /**
+   * Get a list of all board type names
+   * @return Vector of board names
+   */
+  static std::vector<std::string> get_board_names();
+  
+  /**
+   * Create a new board instance by name
+   * @param name The name of the board to create
+   * @return Unique pointer to the new board instance, or nullptr if not found
+   */
+  static std::unique_ptr<Board> create_board(const std::string &name);
 
+  /**
+   * Helper class for automatic board registration
+   */
   template <class BoardType> class Register {
   public:
-    Register() {
-      static BoardType board;
-      boards.push_back(&board);
+    Register(const std::string &name, const std::string &description = "") {
+      // Register the board info with factory, replacing any existing registration
+      board_infos[name] = {
+        description,
+        []() { return std::make_unique<BoardType>(); }
+      };
     }
   };
 };
