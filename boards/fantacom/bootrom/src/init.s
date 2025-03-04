@@ -1,10 +1,8 @@
-    .org 0x0000
     .equ PAGETABLE, 0
-    .global _start
-
+    .globl _start
     
-    .global init
-init:
+    .globl _init
+_init:
     ld hl, 0x3000
     ld sp, hl
     ; Set up ROM mapping (2 pages)
@@ -16,10 +14,10 @@ init:
     inc a
     out (c), a
 
-    ; Initialize memory
+    ; Find some free pages
     ld bc, PAGETABLE + 2    ; Virtual-to-physical remap registers
     ld hl, 0x2000           ; Virtual page address
-    ld d, 2                 ; First physical page to test
+    ld d, 128               ; First physical page to test
     ld e, 2                 ; Number of contiguous pages we want
 0:
     out (c), d

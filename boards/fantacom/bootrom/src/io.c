@@ -1,48 +1,44 @@
-// Z80 I/O routines
-#pragma once
-#include <stdint.h>
 #include <io.h>
 
-void outb(uint16_t port, uint8_t data) {
-__asm;
-  push ix
-  ld ix, #0
-  add ix, sp
+__attribute__((naked)) uint8_t in(uint16_t address) {
+  __asm__(
+    "push ix\n"
+    "ld ix, 0\n"
+    "add ix, sp\n"
 
-  ld c, (ix+4)
-  ld b, (ix+5)
-  ld a, (ix+6)
-  out (c), a
-
-  pop ix
-  ret
-__endasm;
+    "ld c, (ix + 4)\n"
+    "ld b, (ix + 5)\n"
+    "in a, (c)\n"
+    
+    "ld sp, ix\n"
+    "pop ix\n"
+    "ret\n"
+  );
 }
 
-void outw(uint16_t port, uint16_t data) {
-  outb(port, data & 0xff);
-  outb(port + 1, data >> 8);
+__attribute__((naked)) void out(uint16_t address, uint8_t value) {
+  __asm__(
+    "push ix\n"
+    "ld ix, 0\n"
+    "add ix, sp\n"
+
+    "ld c, (ix + 4)\n"
+    "ld b, (ix + 5)\n"
+    "ld a, (ix + 6)\n"
+    "out (c), a\n"
+
+    "ld sp, ix\n"
+    "pop ix\n"
+    "ret\n"
+  );
 }
 
-void outl(uint16_t port, uint32_t data) {
-  outw(port, data & 0xffff);
-  outw(port + 2, data >> 16);
+void out16(uint16_t address, uint16_t value) {
+  out(address, value & 0xff);
+  out(address + 1, value >> 8);
 }
 
-uint8_t inb(uint16_t port) {
-__asm;
-  push ix
-  ld ix, #0
-  add ix, sp
-
-  ld c, (ix+4)
-  ld b, (ix+5)
-  in a, (c)
-
-  ld l, a
-  ld h, #0
-
-  pop ix
-  ret
-__endasm;
+void out32(uint16_t address, uint32_t value) {
+  out16(address, value & 0xffff);
+  out16(address + 2, value >> 16);
 }

@@ -1,50 +1,25 @@
 #include <string.h>
 
-typedef struct DriverInfo {
-  void (*init)(void);
-} DriverInfo;
+extern char __data_start[], __data_end[], __data_load[];
+extern char __bss_start[], __bss_end[];
+extern void (*__init_array_start[])(void), (*__init_array_end[])(void);
 
-extern char data_start[];
-extern char data_end[];
-extern char data_load[];
+void __libc_start_main(int (*main)(int, char **, char **), int argc, char **argv, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void *stack_end);
+int main(int argc, char **argv, char **env);
 
-extern char initializer_start[];
-extern char initializer_end[];
-extern char initialized_start[];
+void start(void) {
+  void (**p)(void);
 
-extern char bss_start[];
-extern char bss_end[];
+  memcpy(__data_start, __data_load, __data_end - __data_start);
+  memset(__bss_start, 0, __bss_end - __bss_start);
 
-extern DriverInfo modules_start[];
-extern DriverInfo modules_end[];
-
-extern int main(int argc, char *argv[]);
-
-void init_data() {
-  char *src = data_load;
-  char *dst = data_start;
-  memcpy(dst, src, data_end - data_start);
-  memcpy(initialized_start, initializer_start, initializer_end - initializer_start);
-}
-
-void init_bss() {
-  char *dst = bss_start;
-  while (dst < bss_end) {
-    *dst++ = 0;
+  for (p = __init_array_start; p < __init_array_end; p++) {
+    (*p)();
   }
+
+  __libc_start_main(main, 0, 0, 0, 0, 0, 0);
 }
 
-void init_modules() {
-  DriverInfo *driver = modules_start;
-  while (driver < modules_end) {
-    driver->init();
-    driver++;
-  }
-}
-
-void start() {
-  init_data();
-  init_bss();
-  init_modules();
-  main(0, 0);
+void _exit(int status) {
+  while (1);
 }

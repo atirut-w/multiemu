@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-void outb(uint16_t port, uint8_t data);
-void outw(uint16_t port, uint16_t data);
-void outl(uint16_t port, uint32_t data);
+uint8_t in(uint16_t address);
 
-uint8_t inb(uint16_t port);
+void out(uint16_t address, uint8_t value);
+void out16(uint16_t address, uint16_t value);
+void out32(uint16_t address, uint32_t value);

@@ -1,6 +1,8 @@
 #include "io.h"
+#include "mmu/mmu.h"
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #define WIDTH 80
 #define HEIGHT 25
@@ -11,59 +13,74 @@
 #define ATTR_CURSOR 0x70
 #define TAB_SIZE 8
 
-typedef struct VGAChar {
+typedef struct {
   uint8_t ch;
   uint8_t attr;
 } VGAChar;
 
 extern char font[];
-extern VGAChar vram[80 * 25];
+VGAChar vram[WIDTH * HEIGHT];
 int cursor = 0;
 
-void init_vga() {
-  outl(CHARSET_ADDR_PORT, (uint32_t)font & 0xffff);
-  outl(SCREEN_ADDR_PORT, (uint32_t)vram & 0xffff);
+__attribute__((constructor)) void vga_init(void) {
+  out32(CHARSET_ADDR_PORT, mmu_get_physical(font));
+  out32(SCREEN_ADDR_PORT, mmu_get_physical(vram));
+
+  vram[cursor].attr = ATTR_CURSOR;
 }
 
-int putchar(int ch) {
-  vram[cursor].attr = ATTR_DEFAULT;
+ssize_t write(int fd, const void *buf, size_t count) {
+  const char *str = buf;
+  size_t i;
 
-  switch (ch) {
-  default:
-    vram[cursor].ch = ch;
-    cursor++;
-    break;
-  case '\n':
-    cursor += WIDTH - cursor % WIDTH;
-    break;
-  case '\r':
-    cursor -= cursor % WIDTH;
-    break;
-  case '\b':
-    if (cursor > 0) {
-      cursor--;
-      vram[cursor].ch = ' ';
-      vram[cursor].attr = ATTR_DEFAULT;
-    }
-    break;
+  if (fd != 1) {
+    return -1;
   }
 
-  if (cursor >= WIDTH * HEIGHT) {
-    memmove(vram, vram + WIDTH, WIDTH * (HEIGHT - 1) * sizeof(VGAChar));
-    memset(vram + WIDTH * (HEIGHT - 1), 0, WIDTH * sizeof(VGAChar));
-    cursor = WIDTH * (HEIGHT - 1);
+  vram[cursor].attr = ATTR_DEFAULT;
+
+  for (i = 0; i < count; i++) {
+    /* This implement C0 control characters */
+    switch (str[i]) {
+    case '\a':
+      /* Bell */
+      break;
+    case '\b':
+      /* Backspace */
+      if (cursor > 0) {
+        cursor--;
+      }
+      break;
+    case '\t':
+      /* Horizontal tab */
+      cursor += TAB_SIZE - (cursor % TAB_SIZE);
+      break;
+    case '\n':
+      /* Line feed */
+      cursor += WIDTH;
+      break;
+    case '\f':
+      /* Form feed */
+      memset(vram, 0, WIDTH * HEIGHT * sizeof(VGAChar));
+      cursor = 0;
+      break;
+    case '\r':
+      /* Carriage return */
+      cursor -= cursor % WIDTH;
+      break;
+    default:
+      vram[cursor].ch = str[i];
+      vram[cursor].attr = ATTR_DEFAULT;
+      cursor++;
+    }
+
+    if (cursor >= WIDTH * HEIGHT) {
+      memmove(vram, vram + WIDTH, WIDTH * (HEIGHT - 1) * sizeof(VGAChar));
+      memset(vram + WIDTH * (HEIGHT - 1), 0, WIDTH * sizeof(VGAChar));
+      cursor -= WIDTH;
+    }
   }
 
   vram[cursor].attr = ATTR_CURSOR;
-  return ch;
-}
-
-int puts(const char *str) {
-  int len = 0;
-  while (*str) {
-    putchar(*str++);
-    len++;
-  }
-  putchar('\n');
-  return len;
+  return count;
 }

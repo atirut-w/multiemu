@@ -1,5 +1,6 @@
     .section .rodata
+    .globl _font
+
     .balign 16
-    .global _font
 _font:
-    .incbin "../seabios8x16.bin"
+    .incbin "seabios8x16.bin"

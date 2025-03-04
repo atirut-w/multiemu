@@ -1,41 +1,32 @@
-ENTRY(_start)
-
-MEMORY
-{
-    ROM (rx) : ORIGIN = 0x0000, LENGTH = 0x2000
-    RAM (rwx) : ORIGIN = 0x2000, LENGTH = 0x2000
+MEMORY {
+    ROM (rx) : ORIGIN = 0x0000, LENGTH = 8k
+    RAM (rw) : ORIGIN = 0x2000, LENGTH = 8k
 }
 
-SECTIONS
-{
+SECTIONS {
     .text : {
+        KEEP(*(.vectors))
         *(.text)
-        *(_CODE)
+    } > ROM
 
-        _modules_start = .;
-        *(.modules)
-        _modules_end = .;
+    .rodata : {
+        *(.rodata)
 
-        _initializer_start = .;
-        *(_INITIALIZER)
-        _initializer_end = .;
+        ___init_array_start = .;
+        KEEP(*(.init_array))
+        ___init_array_end = .;
     } > ROM
 
     .data : {
-        _data_start = .;
+        ___data_start = .;
         *(.data)
-        *(_DATA)
-        _data_end = .;
-        _data_load = LOADADDR(.data);
-
-        _initialized_start = .;
-        *(_INITIALIZED)
-        _initialized_end = .;
+        ___data_end = .;
+        ___data_load = LOADADDR(.data);
     } > RAM AT > ROM
 
     .bss : {
-        _bss_start = .;
+        ___bss_start = .;
         *(.bss)
-        _bss_end = .;
+        ___bss_end = .;
     } > RAM
 }

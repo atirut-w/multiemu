@@ -1,67 +1,61 @@
-# === Configuration ===
-
 # Directories
-SRC_DIR := src
-RUNTIME_DIR := runtime
-BUILD_DIR := build
-OBJ_DIR := $(BUILD_DIR)/obj
-
-# Source files
-C_SOURCES := $(shell find $(SRC_DIR) -name '*.c')
-ASM_SOURCES := $(shell find $(SRC_DIR) -name '*.s')
-RUNTIME_SOURCES := $(shell find $(RUNTIME_DIR) -name '*.s')
-SOURCES := $(C_SOURCES) $(ASM_SOURCES) $(RUNTIME_SOURCES)
-
-# Object files
-C_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
-ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
-RUNTIME_OBJECTS := $(patsubst $(RUNTIME_DIR)/%.s,$(OBJ_DIR)/%.o,$(RUNTIME_SOURCES))
-OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS) $(RUNTIME_OBJECTS)
+SRCDIR := src
+BUILDDIR := build
+OBJDIR := $(BUILDDIR)/obj
+PREFIX := /usr/z80-elf
 
 # Compiler and tools
-CC := sdcc-sdcc
+CC := ez80-clang
 AS := z80-elf-as
 LD := z80-elf-ld
 OBJCOPY := z80-elf-objcopy
 
-# Flags
-CFLAGS := -mz80 -S -I$(SRC_DIR)/include --opt-code-size -I$(SRC_DIR)/modules
-ASFLAGS := -I$(SRC_DIR)
+# Compiler flags
+INCLUDE := -I$(PREFIX)/include -I$(SRCDIR)/include -I$(SRCDIR) -I$(SRCDIR)/modules
+CFLAGS := -target z80 -S -nostdinc --std=c90 -pedantic-errors -Os -mllvm -z80-gas-style $(INCLUDE)
+ASFLAGS := $(INCLUDE)
 LDFLAGS := -T linker.ld
+LDLIBS := -L$(PREFIX)/lib -lc
+
+# Source files
+CSRC := $(shell find $(SRCDIR) -name '*.c')
+ASRC := $(shell find $(SRCDIR) -name '*.s')
+
+# Object files
+COBJ := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CSRC))
+AOBJ := $(patsubst $(SRCDIR)/%.s,$(OBJDIR)/%.o,$(ASRC))
+OBJS := $(COBJ) $(AOBJ)
 
 # Main target
-TARGET := $(BUILD_DIR)/bootrom.bin
-
-# === Rules ===
+TARGET := $(BUILDDIR)/bootrom.bin
 
 .PHONY: all clean
 
-all: $(BUILD_DIR)/bootrom.bin
+all: $(BUILDDIR)/bootrom.bin
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILDDIR)/*
 
-$(TARGET): $(BUILD_DIR)/bootrom.elf
-	$(OBJCOPY) -O binary $^ $@
+install:
+	cp $(BUILDDIR)/libc.a $(PREFIX)/lib
+	cp $(INCLUDE)/* $(PREFIX)/include
 
-$(BUILD_DIR)/bootrom.elf: $(OBJECTS) | $(BUILD_DIR)
-	$(LD) $(LDFLAGS) -o $@ $^ -L$(BUILD_DIR)
-
-$(BUILD_DIR) $(OBJ_DIR):
+$(BUILDDIR) $(OBJDIR):
 	mkdir -p $@
 
-$(OBJ_DIR)/%.s: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -o $@ $<
-	# sed -i 's/_\([a-zA-Z0-9_]*\)/\1/g' $@
+$(BUILDDIR)/bootrom.bin: $(BUILDDIR)/bootrom.elf
+	$(OBJCOPY) -O binary $< $@
 
-$(OBJ_DIR)/%.o: $(OBJ_DIR)/%.s | $(OBJ_DIR)
-	$(AS) -sdcc -o $@ $<
+$(BUILDDIR)/bootrom.elf: $(OBJS) | $(BUILDDIR)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
-	mkdir -p $(dir $@)
+$(OBJDIR)/%.o: $(SRCDIR)/%.s | $(OBJDIR)
 	$(AS) $(ASFLAGS) -o $@ $<
 
-$(OBJ_DIR)/%.o: $(RUNTIME_DIR)/%.s | $(OBJ_DIR)
+# The (e)Z80 compiler doesn't assemble for us, so we need to do it ourselves
+$(OBJDIR)/%.o: $(OBJDIR)/%.s
+	$(AS) $(ASFLAGS) -march=ez80 -o $@ $<
+
+$(OBJDIR)/%.s: $(SRCDIR)/%.c | $(OBJDIR)
 	mkdir -p $(dir $@)
-	$(AS) -sdcc -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<

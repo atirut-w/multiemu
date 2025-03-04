@@ -1,4 +1,4 @@
 #pragma once
+#include <stdint.h>
 
-// Get the total memory of the system in KiB
-int mmu_get_total_memory();
+uint32_t mmu_get_physical(void *addr);
