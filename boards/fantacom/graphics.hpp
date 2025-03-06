@@ -1,11 +1,10 @@
 #pragma once
 #include "multiemu/memory_region.hpp"
-#include "multiemu/memory_space.hpp"
 #include <cstdint>
 
 struct Graphics {
   MultiEmu::MemoryRegionRAM config;
-  MultiEmu::MemorySpace *ram;
+  MultiEmu::MemoryRegion *ram;
 
   Graphics() : config(8) {};
 

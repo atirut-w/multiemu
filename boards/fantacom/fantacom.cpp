@@ -5,7 +5,6 @@
 #include "multiemu/units.hpp"
 #include "multiemu/utils.hpp"
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -24,20 +23,22 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   clock_speed = 2500000; // 2.5 MHz
   display = true;
 
-  phys = make_unique<MemorySpace>(1 * MIB);
-  io = make_unique<MemorySpace>(KIB);
+  phys = make_unique<MemoryRegion>(MIB);
 
   rom = make_unique<MemoryRegionROM>(ROM_SIZE);
-  rom->data = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
-  phys->add_region(rom.get(), 0, 0);
+  rom->data = Utils::load_rom(args.get<filesystem::path>("program"));
+  rom->data.resize(ROM_SIZE);
+  phys->add_subregion(rom.get(), 0);
+
+  int ram_size = args.get<int>("--ram");
+  ram = make_unique<MemoryRegionRAM>(std::min(ram_size, MIB - ROM_SIZE));
+  phys->add_subregion(ram.get(), ROM_SIZE);
+
+  io = make_unique<MemoryRegion>(64 * KIB);
+  io->add_subregion(&mmu_config, 0);
+  io->add_subregion(&gfx.config, 16);
 
   gfx.ram = phys.get();
-  int ram_size = args.get<int>("--ram");
-  ram = make_unique<MemoryRegionRAM>(std::min(ram_size, 512 * KIB));
-  phys->add_region(ram.get(), 512 * KIB, 0);
-
-  io->add_region(&mmu_config, 0, 0);
-  io->add_region(&gfx.config, 16, 0);
 }
 
 int FantacomBoard::run(int cycles) {

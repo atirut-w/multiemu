@@ -60,7 +60,7 @@ void write(void *ctx, uint16_t address, uint8_t value) {
 
 void CPMBoard::setup(const ArgumentParser &args) {
   ifstream rom(args.get<filesystem::path>("program"), ios::binary);
-  auto romv = Utils::load_rom(args.get<filesystem::path>("program"), 0x10000);
+  auto romv = Utils::load_rom(args.get<filesystem::path>("program"));
   
   for (int i = 0; i < min(0x10000, static_cast<int>(romv.size())); i++)
   {
