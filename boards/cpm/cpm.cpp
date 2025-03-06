@@ -1,6 +1,7 @@
 #include "cpm.hpp"
 #include "argparse/argparse.hpp"
 #include "multiemu/board_registry.hpp"
+#include "multiemu/units.hpp"
 #include "multiemu/utils.hpp"
 #include <algorithm>
 #include <cstdint>
@@ -60,7 +61,7 @@ void write(void *ctx, uint16_t address, uint8_t value) {
 
 void CPMBoard::setup(const ArgumentParser &args) {
   ifstream rom(args.get<filesystem::path>("program"), ios::binary);
-  auto romv = Utils::load_rom(args.get<filesystem::path>("program"));
+  auto romv = Utils::load_rom(args.get<filesystem::path>("program"), 64 * KIB);
   
   for (int i = 0; i < min(0x10000, static_cast<int>(romv.size())); i++)
   {

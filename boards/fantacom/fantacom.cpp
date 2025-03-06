@@ -26,8 +26,7 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   phys = make_unique<MemoryRegion>(MIB);
 
   rom = make_unique<MemoryRegionROM>(ROM_SIZE);
-  rom->data = Utils::load_rom(args.get<filesystem::path>("program"));
-  rom->data.resize(ROM_SIZE);
+  rom->data = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
   phys->add_subregion(rom.get(), 0);
 
   int ram_size = args.get<int>("--ram");
