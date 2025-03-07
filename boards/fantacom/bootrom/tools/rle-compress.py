@@ -7,9 +7,12 @@ Compression format:
   (first byte value - 126) gives the compressed sequence length between 2 and 129
   The following byte contains the repeated value
 
-- For unique sequences: [0-127][byte 0][byte 1]...[byte n]
-  (first byte value + 1) gives the uncompressed sequence length between 1 and 128
+- For unique sequences: [1-127][byte 0][byte 1]...[byte n]
+  First byte value gives the uncompressed sequence length between 1 and 127
   The following n bytes contain the unique values
+  
+- Special case: [0] represents EOF (end of file)
+  A null sequence marker is used to indicate the end of the compressed data
 """
 
 import sys
@@ -20,7 +23,7 @@ import argparse
 def compress_rle(data):
     """Compress data using the RLE format described above."""
     if not data:
-        return bytearray()
+        return bytearray([0])  # Empty data becomes EOF marker
 
     result = bytearray()
     i = 0
@@ -50,7 +53,7 @@ def compress_rle(data):
             
             # Count unique bytes (where no two adjacent bytes are the same)
             # but stop if we see a potential RLE sequence (2+ identical bytes)
-            while j < data_len and unique_count < 128:
+            while j < data_len and unique_count < 127:
                 if j + 1 < data_len and data[j] == data[j + 1]:
                     # Found a potential RLE sequence, stop here
                     break
@@ -58,10 +61,12 @@ def compress_rle(data):
                 j += 1
                 
             # Encode as unique sequence
-            result.append(unique_count - 1)
+            result.append(unique_count)
             result.extend(data[unique_start:unique_start + unique_count])
             i += unique_count
 
+    # Add EOF marker
+    result.append(0)
     return result
 
 
@@ -78,7 +83,10 @@ def decompress_rle(data):
         control = data[i]
         i += 1
 
-        if control >= 128:
+        if control == 0:
+            # EOF marker
+            break
+        elif control >= 128:
             # Compressed sequence
             repeat_count = control - 126
             repeat_byte = data[i]
@@ -86,7 +94,7 @@ def decompress_rle(data):
             result.extend([repeat_byte] * repeat_count)
         else:
             # Unique sequence
-            unique_count = control + 1
+            unique_count = control
             result.extend(data[i:i + unique_count])
             i += unique_count
 
