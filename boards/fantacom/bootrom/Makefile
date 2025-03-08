@@ -29,7 +29,7 @@ OBJS := $(COBJ) $(AOBJ)
 # Main target
 TARGET := $(BUILDDIR)/bootrom.bin
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: $(BUILDDIR)/bootrom.bin
 
