@@ -50,20 +50,23 @@ public:
   // No write_internal override for ROM - it's read-only
 };
 
-class MMIOOps {
-public:
-  std::function<uint8_t(std::size_t)> read = [](std::size_t) { return 0; };
-  std::function<void(std::size_t, uint8_t)> write = [](std::size_t, uint8_t) {};
-};
-
 class MemoryRegionMMIO : public MemoryRegion {
-  MMIOOps ops;
+  std::function<uint8_t(std::size_t)> read_cb = nullptr;
+  std::function<void(std::size_t, uint8_t)> write_cb = nullptr;
 
 public:
-  MemoryRegionMMIO(std::size_t size, MMIOOps ops) : MemoryRegion(size), ops(ops) { backed = true; };
+  MemoryRegionMMIO(std::size_t size, 
+                  std::function<uint8_t(std::size_t)> read_cb = nullptr,
+                  std::function<void(std::size_t, uint8_t)> write_cb = nullptr) 
+    : MemoryRegion(size), read_cb(read_cb), write_cb(write_cb) { backed = true; };
 
-  uint8_t read_internal(std::size_t addr) override { return ops.read(addr); }
-  void write_internal(std::size_t addr, uint8_t value) override { ops.write(addr, value); }
+  uint8_t read_internal(std::size_t addr) override { 
+    return read_cb ? read_cb(addr) : 0; 
+  }
+  
+  void write_internal(std::size_t addr, uint8_t value) override { 
+    if (write_cb) write_cb(addr, value);
+  }
 };
 
 }
