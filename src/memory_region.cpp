@@ -56,7 +56,8 @@ void MemoryRegion::remove_subregion(MemoryRegion *region) {
 
 MemoryRegion *MemoryRegion::resolve_address(size_t addr) {
   if (addr >= size) {
-    throw out_of_range("address out of range");
+    cout << "WARN: address " << addr << " out of bounds\n";
+    return nullptr;
   }
   for (auto region : subregions) {
     size_t rel = addr - region->offset;
