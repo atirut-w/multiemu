@@ -13,15 +13,25 @@ uint8_t MemoryRegion::read(size_t addr) {
     cout << "WARN: read from invalid address " << addr << "\n";
     return 0;
   }
-  return region->read(addr - region->offset);
+  
+  if (region == this) {
+    return read_internal(addr);
+  } else {
+    return region->read(addr - region->offset);
+  }
 }
 
 void MemoryRegion::write(size_t addr, uint8_t value) {
   auto region = resolve_address(addr);
-  if (region) {
-    region->write(addr - region->offset, value);
-  } else {
+  if (!region) {
     cout << "WARN: write to invalid address " << addr << "\n";
+    return;
+  }
+  
+  if (region == this) {
+    write_internal(addr, value);
+  } else {
+    region->write(addr - region->offset, value);
   }
 }
 
@@ -58,50 +68,4 @@ MemoryRegion *MemoryRegion::resolve_address(size_t addr) {
     }
   }
   return backed ? this : nullptr;
-}
-
-uint8_t MemoryRegionRAM::read(size_t addr) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    return region->read(addr - region->offset);
-  }
-  return data[addr];
-}
-
-void MemoryRegionRAM::write(size_t addr, uint8_t value) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    region->write(addr - region->offset, value);
-  } else {
-    data[addr] = value;
-  }
-}
-
-uint8_t MemoryRegionROM::read(size_t addr) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    return region->read(addr - region->offset);
-  }
-  return data[addr];
-}
-
-void MemoryRegionROM::write(size_t addr, uint8_t value) {
-  // NOP
-}
-
-uint8_t MemoryRegionMMIO::read(size_t addr) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    return region->read(addr - region->offset);
-  }
-  return ops.read(addr);
-}
-
-void MemoryRegionMMIO::write(size_t addr, uint8_t value) {
-  auto region = resolve_address(addr);
-  if (region != this) {
-    region->write(addr - region->offset, value);
-  } else {
-    ops.write(addr, value);
-  }
 }
