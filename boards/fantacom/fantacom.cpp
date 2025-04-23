@@ -10,7 +10,7 @@
 #include <memory>
 #include <stdexcept>
 
-#define ROM_SIZE 0x2000
+#define ROM_SIZE (256 * KIB)
 
 using namespace std;
 using namespace argparse;
