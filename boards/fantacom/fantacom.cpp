@@ -33,7 +33,7 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   ram = make_unique<MemoryRegionRAM>(std::min(ram_size, 512 * KIB));
   phys->add_subregion(ram.get(), 512 * KIB);
 
-  io = make_unique<MemoryRegion>(64 * KIB);
+  io = make_unique<MemoryRegion>(256);
   io->add_subregion(&mmu_config, 0);
   io->add_subregion(&gfx.config, 16);
 
