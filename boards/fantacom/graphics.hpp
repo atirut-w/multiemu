@@ -6,11 +6,14 @@ struct Graphics {
   MultiEmu::MemoryRegionRAM config;
   MultiEmu::MemoryRegion *ram;
 
-  Graphics() : config(8) {};
+  Graphics() : config(2) {};
 
   void draw();
 
   uint32_t get_address(int index) {
-    return config.data[index] << 16 | config.data[index + 1] << 8 | config.data[index + 2];
+    // Use page-based addressing like the MMU
+    // Each entry is a page number, addressing starts at beginning of page
+    uint8_t page = config.data[index];
+    return page << 12; // Convert page to physical address (4KB pages)
   }
 };

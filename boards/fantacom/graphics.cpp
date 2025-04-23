@@ -27,7 +27,7 @@ array<Color, 16> palette = {
 };
 
 void Graphics::draw() {
-  auto charset_addr = *(uint32_t *)&config.data[0];
+  auto charset_addr = get_address(0);
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
     auto char_row = ram->read(charset_addr++);
@@ -44,7 +44,7 @@ void Graphics::draw() {
   ClearBackground(BLACK);
 
   // 80x25, 8x16
-  auto vram_addr = *(uint32_t *)&config.data[4];
+  auto vram_addr = get_address(1);
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
       auto char_index = ram->read(vram_addr++);
