@@ -27,10 +27,11 @@ array<Color, 16> palette = {
 };
 
 void Graphics::draw() {
-  auto charset_addr = get_address(0);
+  // Character set is now in the dedicated VRAM
+  auto charset_addr = 0; // Start at beginning of VRAM
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
-    auto char_row = ram->read(charset_addr++);
+    auto char_row = vram.data[charset_addr++];
     for (int col = 0; col < 8; col++) {
       auto bit = (char_row >> (7 - col)) & 1;
       ImageDrawPixel(&charset_img, col, row, bit ? WHITE : Color{0, 0, 0, 0});
@@ -44,11 +45,12 @@ void Graphics::draw() {
   ClearBackground(BLACK);
 
   // 80x25, 8x16
-  auto vram_addr = get_address(1);
+  // Character data is in VRAM starting at offset 4096 (after font data)
+  auto vram_addr = 4096; 
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
-      auto char_index = ram->read(vram_addr++);
-      auto char_attr = ram->read(vram_addr++);
+      auto char_index = vram.data[vram_addr++];
+      auto char_attr = vram.data[vram_addr++];
       auto fg = palette[char_attr & 0x0f];
       auto bg = palette[char_attr >> 4];
 
