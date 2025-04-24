@@ -10,3 +10,6 @@
 [submodule "3rd/rlImGui"]
 	path = 3rd/rlImGui
 	url = https://github.com/raylib-extras/rlImGui
+[submodule "3rd/imgui"]
+	path = 3rd/imgui
+	url = https://github.com/ocornut/imgui
