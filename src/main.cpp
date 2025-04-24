@@ -1,13 +1,15 @@
+#include "imgui.h"
 #include "multiemu/display.hpp"
 #include "raylib.h"
+#include "rlImGui.h"
 #include <algorithm>
 #include <argparse/argparse.hpp>
-#include <multiemu/board_registry.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <multiemu/board.hpp>
+#include <multiemu/board_registry.hpp>
 #include <ratio>
 #include <thread>
 
@@ -72,11 +74,22 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(640, 400, "MultiEmu");
+  rlImGuiSetup(true); // Dark theme my beloved
 
   while (!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(GRAY);
+
+    // TODO: Draw the UI here
+    rlImGuiBegin();
+
+    ImGui::Begin("Hello, world!");
+    ImGui::Text("This is some useful text.");
+    ImGui::End();
+
+    rlImGuiEnd();
 
     EndDrawing();
   }
