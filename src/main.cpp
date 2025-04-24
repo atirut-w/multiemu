@@ -77,17 +77,38 @@ int main(int argc, const char *argv[]) {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(640, 400, "MultiEmu");
   rlImGuiSetup(true); // Dark theme my beloved
+  bool run = true;
+  bool showAbout = false;
 
-  while (!WindowShouldClose()) {
+  while (!WindowShouldClose() && run) {
     BeginDrawing();
     ClearBackground(GRAY);
 
     // TODO: Draw the UI here
     rlImGuiBegin();
 
-    ImGui::Begin("Hello, world!");
-    ImGui::Text("This is some useful text.");
-    ImGui::End();
+    if (ImGui::BeginMainMenuBar()) {
+      if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Quit")) {
+          run = false;
+        }
+        ImGui::EndMenu();
+      }
+      if (ImGui::BeginMenu("Help")) {
+        if (ImGui::MenuItem("About")) {
+          showAbout = true;
+        }
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
+    }
+
+    if (showAbout) {
+      ImGui::Begin("About", &showAbout, ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Text("MultiEmu");
+      ImGui::Text("A multi-system emulator framework");
+      ImGui::End();
+    }
 
     rlImGuiEnd();
 
