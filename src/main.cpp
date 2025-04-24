@@ -38,6 +38,9 @@ unique_ptr<const ArgumentParser> parse_arguments(int argc, const char *argv[]) {
       .help("Amount of RAM in KB")
       .default_value(64 * 1024)
       .action([](const string &value) { return stoi(value) * 1024; });
+      
+  // Break on start for debugging
+  parser->add_argument("--break").help("Break on start for debugging").flag();
 
   try {
     parser->parse_args(argc, argv);
@@ -90,6 +93,16 @@ int main(int argc, const char *argv[]) {
   board->setup(*args);
   if (board->display) {
     Display::init(640, 400);
+  }
+  
+  // Set initial CPU state - break if requested
+  if (args->get<bool>("--break")) {
+    cpuPaused = true;
+    showDebugger = true;
+    // Make sure CPU stops immediately after first instruction
+    if (board->cpu) {
+      board->cpu->stop();
+    }
   }
 
   while (!WindowShouldClose() && run) {
