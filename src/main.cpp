@@ -76,6 +76,7 @@ int main(int argc, const char *argv[]) {
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(640, 400, "MultiEmu - Initializing...");
+  SetTargetFPS(60);
   rlImGuiSetup(true); // Dark theme my beloved
   bool run = true;
   bool showAbout = false;
@@ -86,23 +87,16 @@ int main(int argc, const char *argv[]) {
     Display::init(640, 400);
   }
 
-  SetWindowTitle("MultiEmu");
   while (!WindowShouldClose() && run) {
     BeginDrawing();
     ClearBackground(GRAY);
 
-    int target_cycles;
-    if (board->display) {
-      float frame_time = GetFrameTime();
-      if (frame_time > 5.0) {
-        cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
-        frame_time = 1.0 / 60;
-      }
-      target_cycles = static_cast<int>(board->clock_speed * frame_time);
-    } else {
-      target_cycles = static_cast<int>(board->clock_speed / 60);
-      this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
+    float frame_time = GetFrameTime();
+    if (frame_time > 5.0) {
+      cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
+      frame_time = 1.0 / 60;
     }
+    int target_cycles = static_cast<int>(board->clock_speed * frame_time);
     int cycles_ran = board->run(max(1, target_cycles + bias));
     bias = target_cycles - cycles_ran;
     if (cycles_ran == 0) {
@@ -112,6 +106,11 @@ int main(int argc, const char *argv[]) {
       board->draw();
       Display::draw();
     }
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "MultiEmu - %.2f MHz - %d cycles - %d FPS", board->clock_speed / 1e6, cycles_ran,
+             static_cast<int>(1.0 / frame_time));
+    SetWindowTitle(buffer);
 
     // TODO: Draw the UI here
     rlImGuiBegin();
