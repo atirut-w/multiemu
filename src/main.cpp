@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "imgui_memory_editor/imgui_memory_editor.h"
 #include "multiemu/display.hpp"
 #include "raylib.h"
 #include "rlImGui.h"
@@ -59,6 +60,45 @@ void list_boards() {
   }
 }
 
+// Global variable for memory editor callbacks
+static bool g_showIOSpace = false;
+
+// Memory read/write callbacks for the memory editor
+static ImU8 MemoryReadFn(const ImU8* mem, size_t addr, void* user_data) {
+  Board* board = static_cast<Board*>(user_data);
+  if (board && board->cpu) {
+    if (board->cpu->getDebuggerCapabilities().supportsPortIO && g_showIOSpace) {
+      return board->cpu->in(addr);
+    } else {
+      return board->cpu->read(addr);
+    }
+  }
+  return 0;
+}
+
+static void MemoryWriteFn(ImU8* mem, size_t addr, ImU8 value, void* user_data) {
+  Board* board = static_cast<Board*>(user_data);
+  if (board && board->cpu) {
+    if (board->cpu->getDebuggerCapabilities().supportsPortIO && g_showIOSpace) {
+      board->cpu->out(addr, value);
+    } else {
+      board->cpu->write(addr, value);
+    }
+  }
+}
+
+// Highlight the current program counter
+static bool MemoryHighlightFn(const ImU8* mem, size_t addr, void* user_data) {
+  Board* board = static_cast<Board*>(user_data);
+  if (board && board->cpu) {
+    // Only highlight PC in normal memory view, not in I/O space view
+    if (!g_showIOSpace) {
+      return addr == board->cpu->getProgramCounter();
+    }
+  }
+  return false;
+}
+
 int main(int argc, const char *argv[]) {
   auto args = parse_arguments(argc, argv);
   if (!args) {
@@ -88,7 +128,18 @@ int main(int argc, const char *argv[]) {
   int bias = 0;
 
   // Debugger state
-  bool showIOSpace = false;
+  g_showIOSpace = false;
+  MemoryEditor memEdit;
+  
+  // Initialize memory editor
+  memEdit.ReadOnly = false;
+  memEdit.ReadFn = MemoryReadFn;
+  memEdit.WriteFn = MemoryWriteFn;
+  memEdit.HighlightFn = MemoryHighlightFn;
+  memEdit.UserData = board.get();  // Pass board pointer to callbacks
+  memEdit.OptShowDataPreview = true;
+  memEdit.OptShowOptions = true;
+  memEdit.OptUpperCaseHex = true;
 
   board->setup(*args);
   if (board->display) {
@@ -205,8 +256,6 @@ int main(int argc, const char *argv[]) {
     }
 
     if (showDebugger && board->cpu) {
-      static int memoryStartAddress = 0;
-
       ImGui::Begin("Debugger", &showDebugger);
 
       // Control buttons
@@ -354,151 +403,25 @@ int main(int argc, const char *argv[]) {
         }
       }
 
-      // Memory view - CPU-agnostic implementation
+      // Memory view using ImGui memory editor
       if (ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen)) {
-        static char memoryAddrInput[17] = "0000"; // Support for up to 64-bit addresses
         auto capabilities = board->cpu->getDebuggerCapabilities();
-
-        // Use ImGui's automatic layout system
-        ImGui::PushID("MemoryControls");
         
-        // Calculate the actual width needed for the I/O Space checkbox
-        float ioCheckboxWidth = 0.0f;
+        // I/O Space toggle if supported
         if (capabilities.supportsPortIO) {
-            // Calculate the width: checkbox (20px) + spacing + text width + some padding
-            const float checkboxSize = ImGui::GetFrameHeight(); // Typically 16-20px based on font size
-            const float textWidth = ImGui::CalcTextSize("I/O Space").x;
-            const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
-            ioCheckboxWidth = checkboxSize + spacing + textWidth + 15.0f; // Extra padding
+          if (ImGui::Checkbox("I/O Space", &g_showIOSpace)) {
+            // Update global variable for memory editor callbacks
+            if (g_showIOSpace) {
+              memEdit.GotoAddr = 0; // Reset memory view when switching to I/O
+            }
+          }
         }
         
-        // Start with a table layout to better control sizes
-        if (ImGui::BeginTable("MemoryViewControls", capabilities.supportsPortIO ? 5 : 4, 
-                             ImGuiTableFlags_SizingStretchProp)) {
-            
-            // Set column widths proportionally
-            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-            ImGui::TableSetupColumn("Input", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-            ImGui::TableSetupColumn("View", ImGuiTableColumnFlags_WidthFixed, 55.0f);
-            ImGui::TableSetupColumn("GoPC", ImGuiTableColumnFlags_WidthFixed, 75.0f);
-            if (capabilities.supportsPortIO) {
-                ImGui::TableSetupColumn("IO", ImGuiTableColumnFlags_WidthFixed, ioCheckboxWidth);
-            }
-            
-            // Create the control row
-            ImGui::TableNextRow();
-            
-            // Address label
-            ImGui::TableNextColumn();
-            ImGui::AlignTextToFramePadding();
-            ImGui::Text("Address:");
-            
-            // Address input field - gets all remaining width
-            ImGui::TableNextColumn();
-            ImGui::SetNextItemWidth(-FLT_MIN); // Use all available width in column
-            ImGui::InputText("##MemAddr", memoryAddrInput, sizeof(memoryAddrInput),
-                           ImGuiInputTextFlags_CharsHexadecimal);
-            
-            // View button
-            ImGui::TableNextColumn();
-            if (ImGui::Button("View", ImVec2(-FLT_MIN, 0))) { // Use column width
-                memoryStartAddress = strtol(memoryAddrInput, NULL, 16);
-            }
-            
-            // Go to PC button
-            ImGui::TableNextColumn();
-            if (ImGui::Button("Go to PC", ImVec2(-FLT_MIN, 0))) { // Use column width
-                memoryStartAddress = board->cpu->getProgramCounter();
-                snprintf(memoryAddrInput, sizeof(memoryAddrInput), "%X", memoryStartAddress);
-            }
-            
-            // I/O toggle if supported
-            if (capabilities.supportsPortIO) {
-                ImGui::TableNextColumn();
-                // Center the checkbox in its column
-                float availWidth = ImGui::GetContentRegionAvail().x;
-                float checkboxWidth = ImGui::CalcTextSize("I/O Space").x + ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x;
-                float offset = (availWidth - checkboxWidth) * 0.5f;
-                if (offset > 0)
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
-                
-                if (ImGui::Checkbox("I/O Space", &showIOSpace)) {
-                    if (showIOSpace) {
-                        // Reset memory view to 0 when switching to I/O space
-                        memoryStartAddress = 0;
-                        snprintf(memoryAddrInput, sizeof(memoryAddrInput), "0");
-                    }
-                }
-            }
-            
-            ImGui::EndTable();
-        }
-        
-        ImGui::PopID();
-
-        // Memory address range indicator
+        // Set max address based on CPU capabilities
         size_t maxAddress = capabilities.maxAddressSpace > 0 ? capabilities.maxAddressSpace : 0xFFFF;
-
-        ImGui::Text("Valid range: 0x0000 to 0x%X", (unsigned int)maxAddress);
-
-        ImGui::BeginChild("MemoryView", ImVec2(0, 200), true);
-
-        // Calculate bytes per row based on address space size
-        int bytesPerRow = 16;
-        if (maxAddress > 0xFFFFFF)
-          bytesPerRow = 32; // Larger display for big address spaces
-
-        for (int row = 0; row < 16; row++) {
-          size_t baseAddr = memoryStartAddress + row * bytesPerRow;
-
-          // Stop if we go beyond address space
-          if (baseAddr > maxAddress)
-            break;
-
-          // Display address with appropriate width
-          if (maxAddress <= 0xFFFF) {
-            ImGui::Text("%04X:", (unsigned int)baseAddr);
-          } else if (maxAddress <= 0xFFFFFF) {
-            ImGui::Text("%06X:", (unsigned int)baseAddr);
-          } else {
-            ImGui::Text("%08X:", (unsigned int)baseAddr);
-          }
-          ImGui::SameLine();
-
-          // Display hex values
-          std::string ascii;
-          for (int col = 0; col < bytesPerRow; col++) {
-            size_t addr = baseAddr + col;
-            if (addr > maxAddress)
-              break;
-
-            uint8_t value;
-            if (showIOSpace && capabilities.supportsPortIO) {
-              value = board->cpu->in(addr);
-            } else {
-              value = board->cpu->read(addr);
-            }
-
-            ImGui::SameLine(50 + col * 25);
-
-            // Highlight program counter in memory view
-            bool isPC = (addr == board->cpu->getProgramCounter());
-            if (isPC && !showIOSpace) {
-              ImGui::TextColored(ImVec4(1, 1, 0, 1), "%02X", value);
-            } else {
-              ImGui::Text("%02X", value);
-            }
-
-            // Build ASCII representation
-            ascii += (value >= 32 && value < 127) ? static_cast<char>(value) : '.';
-          }
-
-          // Display ASCII representation
-          ImGui::SameLine(50 + bytesPerRow * 25 + 10);
-          ImGui::Text("%s", ascii.c_str());
-        }
-
-        ImGui::EndChild();
+        
+        // Display the memory editor
+        memEdit.DrawContents(nullptr, maxAddress + 1, 0);
       }
 
       ImGui::End();
