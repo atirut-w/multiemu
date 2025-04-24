@@ -103,7 +103,9 @@ int main(int argc, const char *argv[]) {
       run = false;
     }
     if (board->display) {
+      BeginTextureMode(*Display::framebuffer);
       board->draw();
+      EndTextureMode();
       Display::draw();
     }
 
