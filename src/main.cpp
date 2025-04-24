@@ -106,7 +106,7 @@ int main(int argc, const char *argv[]) {
       BeginTextureMode(*Display::framebuffer);
       board->draw();
       EndTextureMode();
-      Display::draw();
+      // Note: Display::draw() is now handled by ImGui::Image in the UI rendering code
     }
 
     char buffer[256];
@@ -114,7 +114,7 @@ int main(int argc, const char *argv[]) {
              static_cast<int>(1.0 / frame_time));
     SetWindowTitle(buffer);
 
-    // TODO: Draw the UI here
+    // Draw UI with ImGui
     rlImGuiBegin();
 
     if (ImGui::BeginMainMenuBar()) {
@@ -132,6 +132,38 @@ int main(int argc, const char *argv[]) {
       }
       ImGui::EndMainMenuBar();
     }
+
+    // Create a child window that fills the entire screen area below the menu bar
+    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
+    ImGui::SetNextWindowSize(ImVec2(GetScreenWidth(), GetScreenHeight() - ImGui::GetFrameHeight()));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    if (ImGui::Begin("BoardOutput", nullptr, 
+                     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | 
+                     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | 
+                     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus)) {
+      // Draw the board's framebuffer as an ImGui image with preserved aspect ratio
+      if (board->display) {
+        // Calculate scaling to maintain aspect ratio
+        ImVec2 availSize = ImGui::GetContentRegionAvail();
+        float texWidth = (float)Display::framebuffer->texture.width;
+        float texHeight = (float)Display::framebuffer->texture.height;
+        float scale = std::min(availSize.x / texWidth, availSize.y / texHeight);
+        
+        ImVec2 imageSize(texWidth * scale, texHeight * scale);
+        
+        // Center the image in the available space
+        float offsetX = (availSize.x - imageSize.x) * 0.5f;
+        float offsetY = (availSize.y - imageSize.y) * 0.5f;
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offsetX, ImGui::GetCursorPosY() + offsetY));
+
+        // Draw the image with Y-flipped UV coordinates (0,1 → 1,0)
+        ImGui::Image((ImTextureID)(intptr_t)Display::framebuffer->texture.id, 
+                     imageSize,
+                     ImVec2(0, 1), ImVec2(1, 0)); // Flipped Y axis
+      }
+      ImGui::End();
+    }
+    ImGui::PopStyleVar();
 
     if (showAbout) {
       ImGui::Begin("About", &showAbout, ImGuiWindowFlags_AlwaysAutoResize);
