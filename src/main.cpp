@@ -231,8 +231,11 @@ int main(int argc, const char *argv[]) {
           cpuPaused = true;
           board->cpu->stop();
         }
-        // Execute a single instruction
-        board->cpu->execute(1);
+        
+        // Temporarily clear the halted state, execute one instruction, then re-halt
+        board->cpu->resume();  // Clear halted state
+        board->cpu->execute(1); // Execute a single instruction
+        board->cpu->stop();     // Re-halt the CPU
       }
 
       ImGui::SameLine();

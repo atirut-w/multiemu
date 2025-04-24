@@ -92,10 +92,12 @@ std::vector<FlagDefinition> Z80::getFlagDefinitions() const {
 
 // Core execution methods
 int Z80::execute(int cycles) {
-  if (pImpl->halted)
+  if (pImpl->halted && cycles > 1) {
+    // If we're halted and not stepping, don't execute
     return 0;
+  }
   
-  // Simple execution without breakpoints
+  // Execute for requested cycles (even if halted, for single-stepping)
   return pImpl->cpu.execute(cycles);
 }
 
