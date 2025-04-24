@@ -133,10 +133,7 @@ int main(int argc, const char *argv[]) {
       }
     }
     if (board->display) {
-      BeginTextureMode(*Display::framebuffer);
       board->draw();
-      EndTextureMode();
-      // Note: Display::draw() is now handled by ImGui::Image in the UI rendering code
     }
 
     char buffer[256];

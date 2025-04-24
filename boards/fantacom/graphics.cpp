@@ -41,6 +41,7 @@ void Graphics::draw() {
   auto charset_tex = LoadTextureFromImage(charset_img);
   UnloadImage(charset_img);
 
+  BeginTextureMode(*Display::framebuffer);
   ClearBackground(BLACK);
 
   // 80x25, 8x16
@@ -60,5 +61,6 @@ void Graphics::draw() {
     }
   }
 
+  EndTextureMode();
   UnloadTexture(charset_tex);
 }
