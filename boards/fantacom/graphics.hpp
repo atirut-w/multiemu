@@ -9,7 +9,7 @@ struct Graphics {
 
   Graphics() : config(2), vram(256 * 1024) {
     for (int i = 0; i < 256 * 1024; i++) {
-      vram.data[i] = 0xd0;
+      vram.data[i] = i;
     }
   };
 
