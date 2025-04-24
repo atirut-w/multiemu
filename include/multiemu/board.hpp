@@ -1,7 +1,9 @@
 #pragma once
 
 #include "argparse/argparse.hpp"
-#include <string>
+#include "multiemu/cpu.hpp"
+#include <memory>
+
 namespace MultiEmu {
 
 /**
@@ -13,6 +15,7 @@ public:
 
   bool display = false;
   int clock_speed = 4000000;
+  std::unique_ptr<CPU> cpu;
 
   /**
    * Set up the board with the given arguments

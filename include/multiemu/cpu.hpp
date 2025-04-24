@@ -4,15 +4,20 @@
 #include <functional>
 
 namespace MultiEmu {
-using ReadCallback = std::function<uint8_t(size_t)>;
-using WriteCallback = std::function<void(size_t, uint8_t)>;
 
-struct CPU {
-  ReadCallback fetch_opcode = [](size_t) { return 0; };
+class CPU {
+public:
+  using ReadCallback = std::function<uint8_t(size_t)>;
+  using WriteCallback = std::function<void(size_t, uint8_t)>;
+
   ReadCallback read = [](size_t) { return 0; };
   WriteCallback write = [](size_t, uint8_t) {};
+  ReadCallback in = [](size_t) { return 0; };
+  WriteCallback out = [](size_t, uint8_t) {};
 
-  virtual int run(int cycles) = 0;
-  virtual void set_trap(size_t opcode, std::function<size_t(size_t)> handler) {}
+  virtual ~CPU() = default;
+
+  virtual int execute(int cycles) = 0;
 };
+
 } // namespace MultiEmu

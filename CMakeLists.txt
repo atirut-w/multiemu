@@ -25,6 +25,8 @@ add_executable(multiemu
     src/display.cpp
     src/utils.cpp
     src/memory_region.cpp
+
+    src/cpu/z80.cpp
 )
 target_include_directories(multiemu PRIVATE include boards cpus 3rd/z80)
 target_link_libraries(multiemu PRIVATE argparse raylib rlImGui ImGui)

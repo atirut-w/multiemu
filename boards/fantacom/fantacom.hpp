@@ -1,15 +1,14 @@
 #pragma once
 #include "argparse/argparse.hpp"
+#include "cpu/z80.hpp"
 #include "fantacom/graphics.hpp"
 #include "multiemu/board.hpp"
 #include "multiemu/memory_region.hpp"
-#include "z80.hpp"
 #include <cstdint>
 #include <memory>
 
 class FantacomBoard : public MultiEmu::Board {
 public:
-  Z80 cpu;
   Graphics gfx;
 
   std::unique_ptr<MultiEmu::MemoryRegion> phys;
@@ -23,9 +22,8 @@ public:
   virtual int run(int cycles) override;
   virtual void draw() override;
   
-  static FantacomBoard *get_self(void *ctx);
-  static uint8_t read(void *ctx, uint16_t address);
-  static void write(void *ctx, uint16_t address, uint8_t value);
-  static uint8_t in(void *ctx, uint16_t address);
-  static void out(void *ctx, uint16_t address, uint8_t value);
+  uint8_t read(uint16_t address);
+  void write(uint16_t address, uint8_t value);
+  uint8_t in(uint16_t address);
+  void out(uint16_t address, uint8_t value);
 };
