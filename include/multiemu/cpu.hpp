@@ -2,8 +2,39 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
+#include <string>
+#include <vector>
 
 namespace MultiEmu {
+
+// CPU debug-related structures
+struct RegisterInfo {
+  std::string name;
+  uint8_t bitWidth;
+  std::string displayFormat = "hex"; // hex, dec, bin
+  std::string description;
+  bool isReadOnly = false;
+};
+
+struct FlagDefinition {
+  std::string name;
+  char shortName;
+  uint8_t bitPosition;
+  std::string description;
+};
+
+struct RegisterGroup {
+  std::string name;
+  std::vector<std::string> registerNames;
+};
+
+struct DebuggerCapabilities {
+  bool supportsPortIO = false;
+  size_t maxAddressSpace = 0;
+  bool hasStatusRegister = false;
+  std::string statusRegisterName;
+};
 
 class CPU {
 public:
@@ -17,7 +48,36 @@ public:
 
   virtual ~CPU() = default;
 
+  // Core execution
   virtual int execute(int cycles) = 0;
+  virtual void reset() = 0;
+  virtual void stop() = 0;
+  virtual void resume() = 0; // Clear halted state without changing CPU state
+  
+  // Register/debugging metadata
+  virtual DebuggerCapabilities getDebuggerCapabilities() const {
+    return DebuggerCapabilities{};
+  }
+  
+  virtual std::vector<RegisterInfo> getRegisterInfo() const {
+    return {}; // Override in specific CPUs
+  }
+  
+  virtual std::vector<RegisterGroup> getRegisterGroups() const {
+    return {}; // Override in specific CPUs
+  }
+  
+  virtual std::vector<FlagDefinition> getFlagDefinitions() const {
+    return {}; // Override in specific CPUs
+  }
+  
+  // Register access
+  virtual uint64_t getRegister(const std::string& name) = 0;
+  virtual bool setRegister(const std::string& name, uint64_t value) = 0;
+  virtual std::map<std::string, uint64_t> getAllRegisters() = 0;
+  
+  // Program counter access for memory view positioning
+  virtual size_t getProgramCounter() = 0;
 };
 
 } // namespace MultiEmu
