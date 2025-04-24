@@ -178,8 +178,8 @@ int main(int argc, const char *argv[]) {
       if (board->display) {
         // Calculate scaling to maintain aspect ratio
         ImVec2 availSize = ImGui::GetContentRegionAvail();
-        float texWidth = (float)Display::framebuffer->texture.width;
-        float texHeight = (float)Display::framebuffer->texture.height;
+        float texWidth = (float)Display::framebuffer.texture.width;
+        float texHeight = (float)Display::framebuffer.texture.height;
         float scale = std::min(availSize.x / texWidth, availSize.y / texHeight);
 
         ImVec2 imageSize(texWidth * scale, texHeight * scale);
@@ -190,7 +190,7 @@ int main(int argc, const char *argv[]) {
         ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + offsetX, ImGui::GetCursorPosY() + offsetY));
 
         // Draw the image with Y-flipped UV coordinates (0,1 → 1,0)
-        ImGui::Image((ImTextureID)(intptr_t)Display::framebuffer->texture.id, imageSize, ImVec2(0, 1),
+        ImGui::Image((ImTextureID)(intptr_t)Display::framebuffer.texture.id, imageSize, ImVec2(0, 1),
                      ImVec2(1, 0)); // Flipped Y axis
       }
       ImGui::End();

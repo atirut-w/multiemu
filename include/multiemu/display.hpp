@@ -3,9 +3,12 @@
 #include <optional>
 
 namespace MultiEmu {
-struct Display {
-  static std::optional<RenderTexture2D> framebuffer;
+class Display {
+public:
+  static RenderTexture2D framebuffer;
 
   static void init(int width, int height);
+  static void begin();
+  static void end();
 };
 } // namespace MultiEmu
