@@ -8,13 +8,8 @@ using namespace MultiEmu;
 optional<RenderTexture2D> Display::framebuffer;
 
 void Display::init(int width, int height) {
-  SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-  InitWindow(width, height, "MultiEmu - Initialising...");
-
   framebuffer = LoadRenderTexture(width, height);
   SetTextureFilter(framebuffer->texture, TEXTURE_FILTER_POINT);
-
-  SetWindowTitle("MultiEmu");
 }
 
 void Display::draw() {
@@ -30,10 +25,5 @@ void Display::draw() {
                    framebuffer->texture.width * scale,
                    framebuffer->texture.height * scale};
 
-  BeginDrawing();
-
-  ClearBackground(DARKGRAY);
   DrawTexturePro(framebuffer->texture, src, dst, {0, 0}, 0, WHITE);
-
-  EndDrawing();
 }

@@ -1,13 +1,15 @@
+#include "imgui.h"
 #include "multiemu/display.hpp"
 #include "raylib.h"
+#include "rlImGui.h"
 #include <algorithm>
 #include <argparse/argparse.hpp>
-#include <multiemu/board_registry.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <multiemu/board.hpp>
+#include <multiemu/board_registry.hpp>
 #include <ratio>
 #include <thread>
 
@@ -71,38 +73,74 @@ int main(int argc, const char *argv[]) {
     list_boards();
     return 1;
   }
-  
+
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(640, 400, "MultiEmu - Initializing...");
+  SetTargetFPS(60);
+  rlImGuiSetup(true); // Dark theme my beloved
+  bool run = true;
+  bool showAbout = false;
+  int bias = 0;
+
   board->setup(*args);
   if (board->display) {
     Display::init(640, 400);
   }
 
-  int bias = 0;
-  while (true) {
-    int target_cycles;
-    if (board->display) {
-      float frame_time = GetFrameTime();
-      if (frame_time > 5.0) {
-        cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
-        frame_time = 1.0 / 60;
-      }
-      target_cycles = (float)board->clock_speed * frame_time;
-    } else {
-      target_cycles = (float)board->clock_speed / 60;
-      this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
-    }
+  while (!WindowShouldClose() && run) {
+    BeginDrawing();
+    ClearBackground(GRAY);
 
+    float frame_time = GetFrameTime();
+    if (frame_time > 5.0) {
+      cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
+      frame_time = 1.0 / 60;
+    }
+    int target_cycles = static_cast<int>(board->clock_speed * frame_time);
     int cycles_ran = board->run(max(1, target_cycles + bias));
     bias = target_cycles - cycles_ran;
-
-    if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
-      break;
+    if (cycles_ran == 0) {
+      run = false;
     }
-
     if (board->display) {
       board->draw();
       Display::draw();
     }
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "MultiEmu - %.2f MHz - %d cycles - %d FPS", board->clock_speed / 1e6, cycles_ran,
+             static_cast<int>(1.0 / frame_time));
+    SetWindowTitle(buffer);
+
+    // TODO: Draw the UI here
+    rlImGuiBegin();
+
+    if (ImGui::BeginMainMenuBar()) {
+      if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Quit")) {
+          run = false;
+        }
+        ImGui::EndMenu();
+      }
+      if (ImGui::BeginMenu("Help")) {
+        if (ImGui::MenuItem("About")) {
+          showAbout = true;
+        }
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
+    }
+
+    if (showAbout) {
+      ImGui::Begin("About", &showAbout, ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Text("MultiEmu");
+      ImGui::Text("A multi-system emulator framework");
+      ImGui::End();
+    }
+
+    rlImGuiEnd();
+
+    EndDrawing();
   }
 
   return 0;
