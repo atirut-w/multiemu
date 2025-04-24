@@ -7,7 +7,11 @@ struct Graphics {
   MultiEmu::MemoryRegion *ram;
   MultiEmu::MemoryRegionRAM vram;
 
-  Graphics() : config(2), vram(256 * 1024) {};
+  Graphics() : config(2), vram(256 * 1024) {
+    for (int i = 0; i < 256 * 1024; i++) {
+      vram.data[i] = 0xd0;
+    }
+  };
 
   void draw();
 };
