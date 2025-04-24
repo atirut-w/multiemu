@@ -75,14 +75,43 @@ int main(int argc, const char *argv[]) {
   }
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(640, 400, "MultiEmu");
+  InitWindow(640, 400, "MultiEmu - Initializing...");
   rlImGuiSetup(true); // Dark theme my beloved
   bool run = true;
   bool showAbout = false;
+  int bias = 0;
 
+  board->setup(*args);
+  if (board->display) {
+    Display::init(640, 400);
+  }
+
+  SetWindowTitle("MultiEmu");
   while (!WindowShouldClose() && run) {
     BeginDrawing();
     ClearBackground(GRAY);
+
+    int target_cycles;
+    if (board->display) {
+      float frame_time = GetFrameTime();
+      if (frame_time > 5.0) {
+        cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
+        frame_time = 1.0 / 60;
+      }
+      target_cycles = static_cast<int>(board->clock_speed * frame_time);
+    } else {
+      target_cycles = static_cast<int>(board->clock_speed / 60);
+      this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
+    }
+    int cycles_ran = board->run(max(1, target_cycles + bias));
+    bias = target_cycles - cycles_ran;
+    if (cycles_ran == 0) {
+      run = false;
+    }
+    if (board->display) {
+      board->draw();
+      Display::draw();
+    }
 
     // TODO: Draw the UI here
     rlImGuiBegin();
@@ -114,39 +143,6 @@ int main(int argc, const char *argv[]) {
 
     EndDrawing();
   }
-  
-  // board->setup(*args);
-  // if (board->display) {
-  //   Display::init(640, 400);
-  // }
-
-  // int bias = 0;
-  // while (true) {
-  //   int target_cycles;
-  //   if (board->display) {
-  //     float frame_time = GetFrameTime();
-  //     if (frame_time > 5.0) {
-  //       cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
-  //       frame_time = 1.0 / 60;
-  //     }
-  //     target_cycles = (float)board->clock_speed * frame_time;
-  //   } else {
-  //     target_cycles = (float)board->clock_speed / 60;
-  //     this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
-  //   }
-
-  //   int cycles_ran = board->run(max(1, target_cycles + bias));
-  //   bias = target_cycles - cycles_ran;
-
-  //   if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
-  //     break;
-  //   }
-
-  //   if (board->display) {
-  //     board->draw();
-  //     Display::draw();
-  //   }
-  // }
 
   return 0;
 }
