@@ -71,39 +71,48 @@ int main(int argc, const char *argv[]) {
     list_boards();
     return 1;
   }
+
+  InitWindow(640, 400, "MultiEmu");
+
+  while (!WindowShouldClose()) {
+    BeginDrawing();
+    ClearBackground(GRAY);
+
+    EndDrawing();
+  }
   
-  board->setup(*args);
-  if (board->display) {
-    Display::init(640, 400);
-  }
+  // board->setup(*args);
+  // if (board->display) {
+  //   Display::init(640, 400);
+  // }
 
-  int bias = 0;
-  while (true) {
-    int target_cycles;
-    if (board->display) {
-      float frame_time = GetFrameTime();
-      if (frame_time > 5.0) {
-        cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
-        frame_time = 1.0 / 60;
-      }
-      target_cycles = (float)board->clock_speed * frame_time;
-    } else {
-      target_cycles = (float)board->clock_speed / 60;
-      this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
-    }
+  // int bias = 0;
+  // while (true) {
+  //   int target_cycles;
+  //   if (board->display) {
+  //     float frame_time = GetFrameTime();
+  //     if (frame_time > 5.0) {
+  //       cout << "Warning: Unusual frame time (" << frame_time << "). Did WM lose focus?" << endl;
+  //       frame_time = 1.0 / 60;
+  //     }
+  //     target_cycles = (float)board->clock_speed * frame_time;
+  //   } else {
+  //     target_cycles = (float)board->clock_speed / 60;
+  //     this_thread::sleep_for(chrono::duration<int64_t, ratio<1, 60>>(1));
+  //   }
 
-    int cycles_ran = board->run(max(1, target_cycles + bias));
-    bias = target_cycles - cycles_ran;
+  //   int cycles_ran = board->run(max(1, target_cycles + bias));
+  //   bias = target_cycles - cycles_ran;
 
-    if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
-      break;
-    }
+  //   if (cycles_ran == 0 || (board->display && WindowShouldClose())) {
+  //     break;
+  //   }
 
-    if (board->display) {
-      board->draw();
-      Display::draw();
-    }
-  }
+  //   if (board->display) {
+  //     board->draw();
+  //     Display::draw();
+  //   }
+  // }
 
   return 0;
 }
