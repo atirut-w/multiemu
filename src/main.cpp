@@ -118,7 +118,7 @@ int main(int argc, const char *argv[]) {
   }
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(640, 400, "MultiEmu - Initializing...");
+  InitWindow(1280, 720, "MultiEmu - Initializing...");
   SetTargetFPS(60);
   rlImGuiSetup(true); // Dark theme my beloved
   bool run = true;
