@@ -20,7 +20,7 @@ static BoardRegistry::Register<FantacomBoard> registration("fantacom", "Z80-base
 
 void FantacomBoard::setup(const ArgumentParser &args) {
   cpu = std::make_unique<MultiEmu::Z80>();
-  
+
   // Set up memory access callbacks
   cpu->read = [this](uint16_t address) { return read(address); };
   cpu->write = [this](uint16_t address, uint8_t value) { write(address, value); };
@@ -47,6 +47,40 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   io->add_subregion(&gfx.config, 16);
 
   gfx.ram = phys.get();
+
+  // Create memory address space (virtual memory after MMU translation)
+  auto memorySpace = std::make_unique<AddressSpace>(
+      "Memory (Virtual)", AddressSpaceType::MEMORY, 64 * KIB, [this](size_t addr) { return read(addr); },
+      [this](size_t addr, uint8_t val) { write(addr, val); },
+      [this]() { return static_cast<size_t>(cpu->getProgramCounter()); });
+  add_address_space(std::move(memorySpace));
+
+  // Create physical memory address space (direct access, no MMU)
+  auto physicalSpace = std::make_unique<AddressSpace>(
+      "Memory (Physical)", AddressSpaceType::MEMORY, MIB, [this](size_t addr) { return this->phys->read(addr); },
+      [this](size_t addr, uint8_t val) { this->phys->write(addr, val); },
+      [this]() {
+        auto pc = cpu->getProgramCounter();
+        auto pagemap = mmu_config.data;
+
+        int v_page = pc >> 12;
+        int p_page = pagemap[v_page];
+        int p_addr = (p_page << 12) | (pc & 0xfff);
+        return p_addr;
+      });
+  add_address_space(std::move(physicalSpace));
+
+  // Create I/O space
+  auto ioSpace = std::make_unique<AddressSpace>(
+      "I/O", AddressSpaceType::IO, 256, [this](size_t addr) { return in(addr); },
+      [this](size_t addr, uint8_t val) { out(addr, val); });
+  add_address_space(std::move(ioSpace));
+
+  // Create VRAM address space (for direct video memory access)
+  auto vramSpace = std::make_unique<AddressSpace>(
+      "VRAM", AddressSpaceType::CUSTOM, 256 * KIB, [this](size_t addr) { return gfx.vram.read(addr); },
+      [this](size_t addr, uint8_t val) { gfx.vram.write(addr, val); });
+  add_address_space(std::move(vramSpace));
 }
 
 int FantacomBoard::run(int cycles) {

@@ -6,42 +6,31 @@ namespace MultiEmu {
 
 // Memory read/write callbacks for the memory editor
 static ImU8 MemoryReadFn(const ImU8* mem, size_t addr, void* user_data) {
-  DebuggerWindow* debugger = static_cast<DebuggerWindow*>(user_data);
-  if (debugger && debugger->board && debugger->board->cpu) {
-    if (debugger->board->cpu->getDebuggerCapabilities().supportsPortIO && debugger->showIOSpace) {
-      return debugger->board->cpu->in(addr);
-    } else {
-      return debugger->board->cpu->read(addr);
-    }
+  MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
+  if (context && context->addressSpace) {
+    return context->addressSpace->read(addr);
   }
   return 0;
 }
 
 static void MemoryWriteFn(ImU8* mem, size_t addr, ImU8 value, void* user_data) {
-  DebuggerWindow* debugger = static_cast<DebuggerWindow*>(user_data);
-  if (debugger && debugger->board && debugger->board->cpu) {
-    if (debugger->board->cpu->getDebuggerCapabilities().supportsPortIO && debugger->showIOSpace) {
-      debugger->board->cpu->out(addr, value);
-    } else {
-      debugger->board->cpu->write(addr, value);
-    }
+  MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
+  if (context && context->addressSpace) {
+    context->addressSpace->write(addr, value);
   }
 }
 
 // Highlight the current program counter
 static bool MemoryHighlightFn(const ImU8* mem, size_t addr, void* user_data) {
-  DebuggerWindow* debugger = static_cast<DebuggerWindow*>(user_data);
-  if (debugger && debugger->board && debugger->board->cpu) {
-    // Only highlight PC in normal memory view, not in I/O space view
-    if (!debugger->showIOSpace) {
-      return addr == debugger->board->cpu->getProgramCounter();
-    }
+  MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
+  if (context && context->addressSpace && context->addressSpace->getProgramCounter) {
+    return addr == context->addressSpace->getProgramCounter();
   }
   return false;
 }
 
 DebuggerWindow::DebuggerWindow(Board* board, bool initialPauseState) 
-    : board(board), cpuPaused(initialPauseState), showIOSpace(false) {
+    : board(board), cpuPaused(initialPauseState) {
   title = "Debugger";
   open = true;
   flags = 0;
@@ -51,7 +40,7 @@ DebuggerWindow::DebuggerWindow(Board* board, bool initialPauseState)
   memEdit.ReadFn = MemoryReadFn;
   memEdit.WriteFn = MemoryWriteFn;
   memEdit.HighlightFn = MemoryHighlightFn;
-  memEdit.UserData = this;  // Pass this pointer to callbacks
+  memEdit.UserData = &memEditContext;  // Pass context to callbacks
   memEdit.OptShowDataPreview = true;
   memEdit.OptShowOptions = true;
   memEdit.OptUpperCaseHex = true;
@@ -207,23 +196,60 @@ void DebuggerWindow::renderRegisters() {
 
 void DebuggerWindow::renderMemoryView() {
   if (ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen)) {
-    auto capabilities = board->cpu->getDebuggerCapabilities();
+    // Get available address spaces from board
+    const auto& spaces = board->get_address_spaces();
     
-    // I/O Space toggle if supported
-    if (capabilities.supportsPortIO) {
-      if (ImGui::Checkbox("I/O Space", &showIOSpace)) {
-        // Reset memory view when switching to I/O
-        if (showIOSpace) {
-          memEdit.GotoAddr = 0;
+    if (spaces.empty()) {
+      // Fallback to CPU-only memory access if no address spaces defined
+      auto capabilities = board->cpu->getDebuggerCapabilities();
+      size_t maxAddress = capabilities.maxAddressSpace > 0 ? capabilities.maxAddressSpace : 0xFFFF;
+      
+      // Create a temporary address space for legacy CPUs
+      if (!selectedSpace) {
+        static auto legacyMemorySpace = std::make_unique<AddressSpace>(
+          "Memory", 
+          AddressSpaceType::MEMORY,
+          maxAddress + 1,
+          [cpu = board->cpu.get()](size_t addr) { return cpu->read(addr); },
+          [cpu = board->cpu.get()](size_t addr, uint8_t val) { cpu->write(addr, val); },
+          [cpu = board->cpu.get()]() { return cpu->getProgramCounter(); }
+        );
+        
+        selectedSpace = legacyMemorySpace.get();
+        memEditContext.addressSpace = selectedSpace;
+      }
+      
+      // Display the memory editor (fallback mode)
+      memEdit.DrawContents(nullptr, selectedSpace->size, 0);
+    } else {
+      // Show address space selector
+      if (ImGui::BeginCombo("Address Space", selectedSpace ? selectedSpace->name.c_str() : "None")) {
+        for (const auto& space : spaces) {
+          bool isSelected = (selectedSpace == space.get());
+          if (ImGui::Selectable(space->name.c_str(), isSelected)) {
+            selectedSpace = space.get();
+            memEditContext.addressSpace = selectedSpace;
+            // Reset goto address when switching spaces
+            memEdit.GotoAddr = 0;
+          }
+          if (isSelected) {
+            ImGui::SetItemDefaultFocus();
+          }
         }
+        ImGui::EndCombo();
+      }
+      
+      // If no address space is selected yet, select the first one
+      if (!selectedSpace && !spaces.empty()) {
+        selectedSpace = spaces[0].get();
+        memEditContext.addressSpace = selectedSpace;
+      }
+      
+      // Show memory editor if a space is selected
+      if (selectedSpace) {
+        memEdit.DrawContents(nullptr, selectedSpace->size, 0);
       }
     }
-    
-    // Set max address based on CPU capabilities
-    size_t maxAddress = capabilities.maxAddressSpace > 0 ? capabilities.maxAddressSpace : 0xFFFF;
-    
-    // Display the memory editor
-    memEdit.DrawContents(nullptr, maxAddress + 1, 0);
   }
 }
 

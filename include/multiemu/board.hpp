@@ -2,7 +2,10 @@
 
 #include "argparse/argparse.hpp"
 #include "multiemu/cpu.hpp"
+#include "multiemu/address_space.hpp"
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace MultiEmu {
 
@@ -10,6 +13,9 @@ namespace MultiEmu {
  * Base class for all emulated boards
  */
 class Board {
+protected:
+  std::vector<std::unique_ptr<AddressSpace>> address_spaces;
+
 public:
   virtual ~Board() = default;
 
@@ -34,6 +40,20 @@ public:
    * Draw graphics to the screen (no-op by default)
    */
   virtual void draw() {}
+
+  /**
+   * Get all address spaces exposed by this board
+   */
+  const std::vector<std::unique_ptr<AddressSpace>>& get_address_spaces() const {
+    return address_spaces;
+  }
+
+  /**
+   * Add a new address space to the board
+   */
+  void add_address_space(std::unique_ptr<AddressSpace> space) {
+    address_spaces.push_back(std::move(space));
+  }
 };
 
 } // namespace MultiEmu

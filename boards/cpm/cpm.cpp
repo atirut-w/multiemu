@@ -73,6 +73,17 @@ void CPMBoard::setup(const ArgumentParser &args) {
 
   cpu.setupCallback(read, write, nullptr, nullptr, this);
   cpu.addCallHandler(call_handler);
+  
+  // Create memory address space
+  auto memorySpace = std::make_unique<AddressSpace>(
+    "Memory", 
+    AddressSpaceType::MEMORY,
+    0x10000,  // 64K address space
+    [this](size_t addr) { return this->memory[addr]; },
+    [this](size_t addr, uint8_t val) { this->memory[addr] = val; },
+    [this]() { return static_cast<size_t>(this->cpu.reg.PC); }
+  );
+  add_address_space(std::move(memorySpace));
 }
 
 int CPMBoard::run(int cycles) {
