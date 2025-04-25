@@ -24,8 +24,6 @@ public:
   // Core execution
   virtual int execute(int cycles) override;
   virtual void reset() override;
-  virtual void stop() override;
-  void resume() override; // New method to clear halted state without resetting
 
   // Debugging capability and metadata
   virtual DebuggerCapabilities getDebuggerCapabilities() const override;

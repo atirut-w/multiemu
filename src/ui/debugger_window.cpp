@@ -69,27 +69,19 @@ void DebuggerWindow::render() {
 void DebuggerWindow::renderControlButtons() {
   if (ImGui::Button(cpuPaused ? "Resume" : "Pause")) {
     cpuPaused = !cpuPaused;
-    if (cpuPaused) {
-      // Pause CPU
-      board->cpu->stop();
-    } else {
-      // Resume CPU - just clear the halted state without resetting
-      board->cpu->resume();
-    }
   }
 
   ImGui::SameLine();
   if (ImGui::Button("Step")) {
-    // Make sure CPU is paused first
-    if (!cpuPaused) {
-      cpuPaused = true;
-      board->cpu->stop();
-    }
+    // Make sure CPU is paused
+    bool wasPaused = cpuPaused;
+    cpuPaused = false;
     
-    // Temporarily clear the halted state, execute one instruction, then re-halt
-    board->cpu->resume();  // Clear halted state
-    board->cpu->execute(1); // Execute a single instruction
-    board->cpu->stop();     // Re-halt the CPU
+    // Execute a single instruction
+    board->cpu->execute(1);
+    
+    // Restore paused state (usually keeping it paused)
+    cpuPaused = wasPaused || true;
   }
 
   ImGui::SameLine();

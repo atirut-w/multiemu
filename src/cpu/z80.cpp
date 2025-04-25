@@ -8,7 +8,6 @@ namespace MultiEmu {
 // Define the implementation struct
 struct Z80::Impl {
   ::Z80 cpu;
-  bool halted = false;
 
   Impl(Z80 *parent) {
     // Set up callbacks, capturing the parent Z80 class pointer
@@ -92,12 +91,7 @@ std::vector<FlagDefinition> Z80::getFlagDefinitions() const {
 
 // Core execution methods
 int Z80::execute(int cycles) {
-  if (pImpl->halted && cycles > 1) {
-    // If we're halted and not stepping, don't execute
-    return 0;
-  }
-  
-  // Execute for requested cycles (even if halted, for single-stepping)
+  // Execute for requested cycles
   return pImpl->cpu.execute(cycles);
 }
 
@@ -118,12 +112,7 @@ void Z80::reset() {
   pImpl->cpu.reg.I = 0;
   pImpl->cpu.reg.R = 0;
   pImpl->cpu.reg.IFF = 0;
-  pImpl->halted = false;
 }
-
-void Z80::stop() { pImpl->halted = true; }
-
-void Z80::resume() { pImpl->halted = false; }
 
 // Register access helpers
 namespace {

@@ -51,8 +51,6 @@ public:
   // Core execution
   virtual int execute(int cycles) = 0;
   virtual void reset() = 0;
-  virtual void stop() = 0;
-  virtual void resume() = 0; // Clear halted state without changing CPU state
   
   // Register/debugging metadata
   virtual DebuggerCapabilities getDebuggerCapabilities() const {

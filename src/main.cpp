@@ -89,7 +89,7 @@ int main(int argc, const char *argv[]) {
   int bias = 0;
 
   // Create debugger window
-  DebuggerWindow debuggerWindow(board.get());
+  DebuggerWindow debugger(board.get());
 
   // Initialize menu bar
   MainMenuBar mainMenuBar;
@@ -103,8 +103,8 @@ int main(int argc, const char *argv[]) {
   // View menu
   Menu viewMenu;
   viewMenu.name = "View";
-  viewMenu.menuItems.push_back({"Debugger", [&debuggerWindow]() { 
-    debuggerWindow.open = !debuggerWindow.open;
+  viewMenu.menuItems.push_back({"Debugger", [&debugger]() { 
+    debugger.open = !debugger.open;
   }});
   mainMenuBar.menus.push_back(viewMenu);
 
@@ -121,12 +121,8 @@ int main(int argc, const char *argv[]) {
   
   // Set initial CPU state - break if requested
   if (args->get<bool>("--break")) {
-    debuggerWindow.cpuPaused = true;
-    debuggerWindow.open = true;
-    // Make sure CPU stops immediately after first instruction
-    if (board->cpu) {
-      board->cpu->stop();
-    }
+    debugger.cpuPaused = true;
+    debugger.open = true;
   }
 
   while (!WindowShouldClose() && run) {
@@ -140,7 +136,7 @@ int main(int argc, const char *argv[]) {
     }
     // Only run CPU cycles if not paused
     int cycles_ran = 0;
-    if (!debuggerWindow.cpuPaused) {
+    if (!debugger.cpuPaused) {
       int target_cycles = static_cast<int>(board->clock_speed * frame_time);
       cycles_ran = board->run(max(1, target_cycles + bias));
       bias = target_cycles - cycles_ran;
@@ -148,8 +144,8 @@ int main(int argc, const char *argv[]) {
       // Check if execution was halted
       if (cycles_ran == 0) {
         if (board->cpu) {
-          // Execution halted - pause the CPU
-          debuggerWindow.cpuPaused = true;
+          // CPU returned 0 cycles - likely an issue, so pause
+          debugger.cpuPaused = true;
         } else {
           // Not a CPU issue, so actually stop
           run = false;
@@ -210,8 +206,8 @@ int main(int argc, const char *argv[]) {
     }
 
     // Render debugger window if open
-    if (debuggerWindow.open && board->cpu) {
-      debuggerWindow.render();
+    if (debugger.open && board->cpu) {
+      debugger.render();
     }
 
     rlImGuiEnd();
