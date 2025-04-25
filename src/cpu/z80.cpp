@@ -97,21 +97,12 @@ int Z80::execute(int cycles) {
 
 void Z80::reset() {
   // The Z80 library doesn't have a reset method, so we'll implement it manually
-  pImpl->cpu.reg.PC = 0;
-  pImpl->cpu.reg.SP = 0;
-  pImpl->cpu.reg.pair.A = 0;
-  pImpl->cpu.reg.pair.F = 0;
-  pImpl->cpu.reg.pair.B = 0;
-  pImpl->cpu.reg.pair.C = 0;
-  pImpl->cpu.reg.pair.D = 0;
-  pImpl->cpu.reg.pair.E = 0;
-  pImpl->cpu.reg.pair.H = 0;
-  pImpl->cpu.reg.pair.L = 0;
-  pImpl->cpu.reg.IX = 0;
-  pImpl->cpu.reg.IY = 0;
-  pImpl->cpu.reg.I = 0;
-  pImpl->cpu.reg.R = 0;
-  pImpl->cpu.reg.IFF = 0;
+  // NOTE: We don't reset every registers, just the bare minimum.
+  pImpl->cpu.reg.IFF = 0;       // Reset interrupt flip-flop
+  pImpl->cpu.reg.interrupt = 0; // Reset interrupt mode
+  pImpl->cpu.reg.PC = 0;        // Reset program counter
+  pImpl->cpu.reg.I = 0;         // Reset interrupt vector
+  pImpl->cpu.reg.R = 0;         // Reset memory refresh
 }
 
 // Register access helpers
