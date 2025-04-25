@@ -7,7 +7,7 @@ public:
   virtual ~UIComponent() = default;
 
   // Render the UI component
-  virtual void render() const = 0;
+  virtual void render() = 0;
 };
 
 }

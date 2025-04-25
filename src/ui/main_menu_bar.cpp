@@ -3,7 +3,7 @@
 
 using namespace MultiEmu;
 
-void MainMenuBar::render() const {
+void MainMenuBar::render() {
   if (ImGui::BeginMainMenuBar()) {
     for (const auto &menu : menus) {
       menu.render();

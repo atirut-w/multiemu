@@ -8,7 +8,7 @@ class MainMenuBar : public UIComponent {
 public:
   std::vector<Menu> menus;
 
-  virtual void render() const override;
+  virtual void render() override;
 };
 
 }

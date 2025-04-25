@@ -16,7 +16,7 @@ public:
   std::string name;
   std::vector<MenuItem> menuItems;
 
-  virtual void render() const override;
+  virtual void render() override;
 };
 
 }

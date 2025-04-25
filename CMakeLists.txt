@@ -28,6 +28,7 @@ add_executable(multiemu
 
     src/ui/main_menu_bar.cpp
     src/ui/menu.cpp
+    src/ui/window.cpp
 
     src/cpu/z80.cpp
 )
