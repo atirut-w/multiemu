@@ -200,27 +200,7 @@ void DebuggerWindow::renderMemoryView() {
     const auto& spaces = board->get_address_spaces();
     
     if (spaces.empty()) {
-      // Fallback to CPU-only memory access if no address spaces defined
-      auto capabilities = board->cpu->getDebuggerCapabilities();
-      size_t maxAddress = capabilities.maxAddressSpace > 0 ? capabilities.maxAddressSpace : 0xFFFF;
-      
-      // Create a temporary address space for legacy CPUs
-      if (!selectedSpace) {
-        static auto legacyMemorySpace = std::make_unique<AddressSpace>(
-          "Memory", 
-          AddressSpaceType::MEMORY,
-          maxAddress + 1,
-          [cpu = board->cpu.get()](size_t addr) { return cpu->read(addr); },
-          [cpu = board->cpu.get()](size_t addr, uint8_t val) { cpu->write(addr, val); },
-          [cpu = board->cpu.get()]() { return cpu->getProgramCounter(); }
-        );
-        
-        selectedSpace = legacyMemorySpace.get();
-        memEditContext.addressSpace = selectedSpace;
-      }
-      
-      // Display the memory editor (fallback mode)
-      memEdit.DrawContents(nullptr, selectedSpace->size, 0);
+      ImGui::Text("No address spaces available.");
     } else {
       // Show address space selector
       if (ImGui::BeginCombo("Address Space", selectedSpace ? selectedSpace->name.c_str() : "None")) {

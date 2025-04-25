@@ -33,8 +33,6 @@ Z80 &Z80::operator=(Z80 &&) noexcept = default;
 // Z80-specific debugger capabilities
 DebuggerCapabilities Z80::getDebuggerCapabilities() const {
   DebuggerCapabilities caps;
-  caps.supportsPortIO = true;
-  caps.maxAddressSpace = 0xFFFF; // 64K
   caps.hasStatusRegister = true;
   caps.statusRegisterName = "F";
   return caps;

@@ -30,8 +30,6 @@ struct RegisterGroup {
 };
 
 struct DebuggerCapabilities {
-  bool supportsPortIO = false;
-  size_t maxAddressSpace = 0;
   bool hasStatusRegister = false;
   std::string statusRegisterName;
 };
