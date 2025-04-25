@@ -1,8 +1,8 @@
 #include "imgui.h"
-#include "imgui_memory_editor/imgui_memory_editor.h"
 #include "multiemu/display.hpp"
 #include "raylib.h"
 #include "rlImGui.h"
+#include "ui/debugger_window.hpp"
 #include "ui/main_menu_bar.hpp"
 #include <algorithm>
 #include <argparse/argparse.hpp>
@@ -61,44 +61,6 @@ void list_boards() {
   }
 }
 
-// Global variable for memory editor callbacks
-static bool g_showIOSpace = false;
-
-// Memory read/write callbacks for the memory editor
-static ImU8 MemoryReadFn(const ImU8* mem, size_t addr, void* user_data) {
-  Board* board = static_cast<Board*>(user_data);
-  if (board && board->cpu) {
-    if (board->cpu->getDebuggerCapabilities().supportsPortIO && g_showIOSpace) {
-      return board->cpu->in(addr);
-    } else {
-      return board->cpu->read(addr);
-    }
-  }
-  return 0;
-}
-
-static void MemoryWriteFn(ImU8* mem, size_t addr, ImU8 value, void* user_data) {
-  Board* board = static_cast<Board*>(user_data);
-  if (board && board->cpu) {
-    if (board->cpu->getDebuggerCapabilities().supportsPortIO && g_showIOSpace) {
-      board->cpu->out(addr, value);
-    } else {
-      board->cpu->write(addr, value);
-    }
-  }
-}
-
-// Highlight the current program counter
-static bool MemoryHighlightFn(const ImU8* mem, size_t addr, void* user_data) {
-  Board* board = static_cast<Board*>(user_data);
-  if (board && board->cpu) {
-    // Only highlight PC in normal memory view, not in I/O space view
-    if (!g_showIOSpace) {
-      return addr == board->cpu->getProgramCounter();
-    }
-  }
-  return false;
-}
 
 int main(int argc, const char *argv[]) {
   auto args = parse_arguments(argc, argv);
@@ -124,23 +86,10 @@ int main(int argc, const char *argv[]) {
   rlImGuiSetup(true); // Dark theme my beloved
   bool run = true;
   bool showAbout = false;
-  bool showDebugger = false;
-  bool cpuPaused = false;
   int bias = 0;
 
-  // Debugger state
-  g_showIOSpace = false;
-  MemoryEditor memEdit;
-  
-  // Initialize memory editor
-  memEdit.ReadOnly = false;
-  memEdit.ReadFn = MemoryReadFn;
-  memEdit.WriteFn = MemoryWriteFn;
-  memEdit.HighlightFn = MemoryHighlightFn;
-  memEdit.UserData = board.get();  // Pass board pointer to callbacks
-  memEdit.OptShowDataPreview = true;
-  memEdit.OptShowOptions = true;
-  memEdit.OptUpperCaseHex = true;
+  // Create debugger window
+  DebuggerWindow debuggerWindow(board.get());
 
   // Initialize menu bar
   MainMenuBar mainMenuBar;
@@ -154,7 +103,9 @@ int main(int argc, const char *argv[]) {
   // View menu
   Menu viewMenu;
   viewMenu.name = "View";
-  viewMenu.menuItems.push_back({"Debugger", [&showDebugger]() { showDebugger = !showDebugger; }});
+  viewMenu.menuItems.push_back({"Debugger", [&debuggerWindow]() { 
+    debuggerWindow.open = !debuggerWindow.open;
+  }});
   mainMenuBar.menus.push_back(viewMenu);
 
   // Help menu
@@ -170,8 +121,8 @@ int main(int argc, const char *argv[]) {
   
   // Set initial CPU state - break if requested
   if (args->get<bool>("--break")) {
-    cpuPaused = true;
-    showDebugger = true;
+    debuggerWindow.cpuPaused = true;
+    debuggerWindow.open = true;
     // Make sure CPU stops immediately after first instruction
     if (board->cpu) {
       board->cpu->stop();
@@ -189,7 +140,7 @@ int main(int argc, const char *argv[]) {
     }
     // Only run CPU cycles if not paused
     int cycles_ran = 0;
-    if (!cpuPaused) {
+    if (!debuggerWindow.cpuPaused) {
       int target_cycles = static_cast<int>(board->clock_speed * frame_time);
       cycles_ran = board->run(max(1, target_cycles + bias));
       bias = target_cycles - cycles_ran;
@@ -198,7 +149,7 @@ int main(int argc, const char *argv[]) {
       if (cycles_ran == 0) {
         if (board->cpu) {
           // Execution halted - pause the CPU
-          cpuPaused = true;
+          debuggerWindow.cpuPaused = true;
         } else {
           // Not a CPU issue, so actually stop
           run = false;
@@ -258,176 +209,9 @@ int main(int argc, const char *argv[]) {
       ImGui::End();
     }
 
-    if (showDebugger && board->cpu) {
-      ImGui::Begin("Debugger", &showDebugger);
-
-      // Control buttons
-      if (ImGui::Button(cpuPaused ? "Resume" : "Pause")) {
-        cpuPaused = !cpuPaused;
-        if (cpuPaused) {
-          // Pause CPU
-          board->cpu->stop();
-        } else {
-          // Resume CPU - just clear the halted state without resetting
-          board->cpu->resume();
-        }
-      }
-
-      ImGui::SameLine();
-      if (ImGui::Button("Step")) {
-        // Make sure CPU is paused first
-        if (!cpuPaused) {
-          cpuPaused = true;
-          board->cpu->stop();
-        }
-        
-        // Temporarily clear the halted state, execute one instruction, then re-halt
-        board->cpu->resume();  // Clear halted state
-        board->cpu->execute(1); // Execute a single instruction
-        board->cpu->stop();     // Re-halt the CPU
-      }
-
-      ImGui::SameLine();
-      if (ImGui::Button("Reset")) {
-        board->cpu->reset();
-      }
-
-      // Register display - CPU-agnostic implementation
-      if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen)) {
-        // Get CPU metadata and current register values
-        auto registers = board->cpu->getAllRegisters();
-        auto regInfo = board->cpu->getRegisterInfo();
-        auto regGroups = board->cpu->getRegisterGroups();
-        auto flags = board->cpu->getFlagDefinitions();
-        auto capabilities = board->cpu->getDebuggerCapabilities();
-
-        // Create mapping of register name to info for quick lookup
-        std::map<std::string, RegisterInfo> regInfoMap;
-        for (const auto &info : regInfo) {
-          regInfoMap[info.name] = info;
-        }
-
-        // Display registers by groups
-        if (!regGroups.empty()) {
-          // Use CPU-provided grouping
-          for (const auto &group : regGroups) {
-            if (ImGui::TreeNodeEx(group.name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-              ImGui::Columns(4, ("regs_" + group.name).c_str());
-
-              for (const auto &regName : group.registerNames) {
-                if (registers.count(regName)) {
-                  uint64_t value = registers[regName];
-
-                  // Check if we have metadata for this register
-                  if (regInfoMap.count(regName)) {
-                    const auto &info = regInfoMap[regName];
-
-                    // Format based on register size and preferred format
-                    if (info.displayFormat == "hex") {
-                      if (info.bitWidth <= 8) {
-                        ImGui::Text("%s: %02X", regName.c_str(), (uint8_t)value);
-                      } else if (info.bitWidth <= 16) {
-                        ImGui::Text("%s: %04X", regName.c_str(), (uint16_t)value);
-                      } else {
-                        ImGui::Text("%s: %08X", regName.c_str(), (uint32_t)value);
-                      }
-                    } else if (info.displayFormat == "dec") {
-                      ImGui::Text("%s: %d", regName.c_str(), (int)value);
-                    } else if (info.displayFormat == "bin") {
-                      // Binary format is more complex - simplified here
-                      ImGui::Text("%s: %d", regName.c_str(), (int)value);
-                    }
-
-                    // Show tooltip with description on hover
-                    if (!info.description.empty() && ImGui::IsItemHovered()) {
-                      ImGui::SetTooltip("%s", info.description.c_str());
-                    }
-                  } else {
-                    // Fallback formatting if no metadata
-                    if (value <= 0xFF) {
-                      ImGui::Text("%s: %02X", regName.c_str(), (uint8_t)value);
-                    } else if (value <= 0xFFFF) {
-                      ImGui::Text("%s: %04X", regName.c_str(), (uint16_t)value);
-                    } else {
-                      ImGui::Text("%s: %08X", regName.c_str(), (uint32_t)value);
-                    }
-                  }
-
-                  ImGui::NextColumn();
-                }
-              }
-
-              ImGui::Columns(1);
-              ImGui::TreePop();
-            }
-          }
-        } else {
-          // Fallback if no groups defined
-          ImGui::Columns(4, "registers");
-
-          for (const auto &[name, value] : registers) {
-            if (value <= 0xFF) {
-              ImGui::Text("%s: %02X", name.c_str(), (uint8_t)value);
-            } else if (value <= 0xFFFF) {
-              ImGui::Text("%s: %04X", name.c_str(), (uint16_t)value);
-            } else {
-              ImGui::Text("%s: %08X", name.c_str(), (uint32_t)value);
-            }
-            ImGui::NextColumn();
-          }
-
-          ImGui::Columns(1);
-        }
-
-        // Flag register display (using metadata if available)
-        if (capabilities.hasStatusRegister && registers.count(capabilities.statusRegisterName) && !flags.empty()) {
-          uint8_t flagReg = (uint8_t)registers[capabilities.statusRegisterName];
-
-          ImGui::Text("Flags: ");
-          ImGui::SameLine();
-
-          // Display flag bits based on metadata
-          for (const auto &flag : flags) {
-            bool isSet = (flagReg & (1 << flag.bitPosition)) != 0;
-
-            if (isSet) {
-              ImGui::TextColored(ImVec4(0, 1, 0, 1), "%c", flag.shortName);
-            } else {
-              ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1), "%c", '-');
-            }
-            ImGui::SameLine();
-
-            // Show tooltip with description on hover
-            if (ImGui::IsItemHovered()) {
-              ImGui::SetTooltip("%s (bit %d): %s", flag.name.c_str(), flag.bitPosition, flag.description.c_str());
-            }
-          }
-          ImGui::NewLine();
-        }
-      }
-
-      // Memory view using ImGui memory editor
-      if (ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen)) {
-        auto capabilities = board->cpu->getDebuggerCapabilities();
-        
-        // I/O Space toggle if supported
-        if (capabilities.supportsPortIO) {
-          if (ImGui::Checkbox("I/O Space", &g_showIOSpace)) {
-            // Update global variable for memory editor callbacks
-            if (g_showIOSpace) {
-              memEdit.GotoAddr = 0; // Reset memory view when switching to I/O
-            }
-          }
-        }
-        
-        // Set max address based on CPU capabilities
-        size_t maxAddress = capabilities.maxAddressSpace > 0 ? capabilities.maxAddressSpace : 0xFFFF;
-        
-        // Display the memory editor
-        memEdit.DrawContents(nullptr, maxAddress + 1, 0);
-      }
-
-      ImGui::End();
+    // Render debugger window if open
+    if (debuggerWindow.open && board->cpu) {
+      debuggerWindow.render();
     }
 
     rlImGuiEnd();
