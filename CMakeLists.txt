@@ -26,6 +26,9 @@ add_executable(multiemu
     src/utils.cpp
     src/memory_region.cpp
 
+    src/ui/main_menu_bar.cpp
+    src/ui/menu.cpp
+
     src/cpu/z80.cpp
 )
 target_include_directories(multiemu PRIVATE include boards cpus 3rd/z80 3rd/imgui_club)

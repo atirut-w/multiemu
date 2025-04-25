@@ -3,6 +3,7 @@
 #include "multiemu/display.hpp"
 #include "raylib.h"
 #include "rlImGui.h"
+#include "ui/main_menu_bar.hpp"
 #include <algorithm>
 #include <argparse/argparse.hpp>
 #include <chrono>
@@ -141,6 +142,27 @@ int main(int argc, const char *argv[]) {
   memEdit.OptShowOptions = true;
   memEdit.OptUpperCaseHex = true;
 
+  // Initialize menu bar
+  MainMenuBar mainMenuBar;
+
+  // File menu
+  Menu fileMenu;
+  fileMenu.name = "File";
+  fileMenu.menuItems.push_back({"Quit", [&run]() { run = false; }});
+  mainMenuBar.menus.push_back(fileMenu);
+
+  // View menu
+  Menu viewMenu;
+  viewMenu.name = "View";
+  viewMenu.menuItems.push_back({"Debugger", [&showDebugger]() { showDebugger = !showDebugger; }});
+  mainMenuBar.menus.push_back(viewMenu);
+
+  // Help menu
+  Menu helpMenu;
+  helpMenu.name = "Help";
+  helpMenu.menuItems.push_back({"About", [&showAbout]() { showAbout = true; }});
+  mainMenuBar.menus.push_back(helpMenu);
+
   board->setup(*args);
   if (board->display) {
     Display::init(640, 400);
@@ -195,27 +217,8 @@ int main(int argc, const char *argv[]) {
     // Draw UI with ImGui
     rlImGuiBegin();
 
-    if (ImGui::BeginMainMenuBar()) {
-      if (ImGui::BeginMenu("File")) {
-        if (ImGui::MenuItem("Quit")) {
-          run = false;
-        }
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("View")) {
-        if (ImGui::MenuItem("Debugger")) {
-          showDebugger = !showDebugger;
-        }
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("Help")) {
-        if (ImGui::MenuItem("About")) {
-          showAbout = true;
-        }
-        ImGui::EndMenu();
-      }
-      ImGui::EndMainMenuBar();
-    }
+    // Render main menu bar
+    mainMenuBar.render();
 
     // Create a child window that fills the entire screen area below the menu bar
     ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
