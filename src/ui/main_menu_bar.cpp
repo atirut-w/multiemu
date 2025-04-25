@@ -5,7 +5,7 @@ using namespace MultiEmu;
 
 void MainMenuBar::render() {
   if (ImGui::BeginMainMenuBar()) {
-    for (const auto &menu : menus) {
+    for (auto &menu : menus) {
       menu.render();
     }
     ImGui::EndMainMenuBar();

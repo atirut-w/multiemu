@@ -8,8 +8,8 @@ void Window::render() {
     for (auto &child : children) {
       child->render();
     }
-    ImGui::End();
   }
+  ImGui::End();
 }
 
 }
