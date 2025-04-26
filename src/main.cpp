@@ -73,20 +73,21 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(1280, 720, "MultiEmu - Initializing...");
-  SetTargetFPS(60);
-  rlImGuiSetup(true); // Dark theme my beloved
-  bool run = true;
-  bool showAbout = false;
-  int bias = 0;
-
-  auto board = BoardRegistry::create_board(args->get<string>("board"));
-  if (!board) {
+  auto board_names = BoardRegistry::get_board_names();
+  if (std::find(board_names.begin(), board_names.end(), args->get<string>("board")) == board_names.end()) {
     cerr << "Board not found: " << args->get<string>("board") << endl;
     list_boards();
     return 1;
   }
+
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(1280, 720, "MultiEmu - Initializing...");
+  SetTargetFPS(60);
+  rlImGuiSetup(true); // Dark theme my beloved
+  auto board = BoardRegistry::create_board(args->get<string>("board"));
+  bool run = true;
+  bool showAbout = false;
+  int bias = 0;
 
   // Create debugger window
   DebuggerWindow debugger(board.get());
