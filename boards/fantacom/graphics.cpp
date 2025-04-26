@@ -27,14 +27,31 @@ array<Color, 16> palette = {
     {255, 255, 255, 255}  // White
 };
 
-void Graphics::draw() {
-  int mode = config.read(0);
+void Graphics::modeset() {
+  // Set up the graphics mode based on the current mode
+  switch (mode) {
+  case 0:
+    Display::init(640, 400);
+    break;
+  case 1:
+    Display::init(320, 200);
+    break;
+  default:
+    std::cerr << "Unknown graphics mode: " << mode << std::endl;
+    break;
+  }
+}
 
+void Graphics::draw() {
   switch (mode) {
   default:
     std::cerr << "Unknown graphics mode: " << mode << std::endl;
+    break;
   case 0:
     drawTextMode80x25();
+    break;
+  case 1:
+    drawBitmapMode320x200x16();
     break;
   }
 }
@@ -59,7 +76,7 @@ void Graphics::drawTextMode80x25() {
 
   // 80x25, 8x16
   // Character data is in VRAM starting at offset 4096 (after font data)
-  auto vram_addr = 4096; 
+  auto vram_addr = 4096;
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
       auto char_index = vram.read(vram_addr++);
@@ -76,4 +93,33 @@ void Graphics::drawTextMode80x25() {
 
   Display::end();
   UnloadTexture(charset_tex);
+}
+
+void Graphics::drawBitmapMode320x200x16() {
+  // Bitmap mode 320x200x16
+  auto vram_addr = 0; // Start at beginning of VRAM
+  auto bitmap_img = GenImageColor(320, 200, BLACK);
+  for (int row = 0; row < 200; row++) {
+    // 160 bytes per scanline in “linear 4bpp”
+    for (int colByte = 0; colByte < 320 / 2; colByte++) {
+      auto b = vram.read(row * (320 / 2) + colByte);
+      int p1 = b & 0x0F;
+      int p2 = (b >> 4) & 0x0F;
+      int x = colByte * 2;
+
+      ImageDrawPixel(&bitmap_img, x, row, palette[p1]);
+      ImageDrawPixel(&bitmap_img, x + 1, row, palette[p2]);
+    }
+  }
+
+  auto bitmap_tex = LoadTextureFromImage(bitmap_img);
+  UnloadImage(bitmap_img);
+
+  Display::begin();
+  ClearBackground(BLACK);
+
+  DrawTexture(bitmap_tex, 0, 0, WHITE);
+
+  Display::end();
+  UnloadTexture(bitmap_tex);
 }
