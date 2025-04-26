@@ -14,8 +14,8 @@ public:
     int priority = 0;
   };
 
-  void mapRegion(AT base, AT size, std::function<DT(AT)> read, std::function<void(AT, DT)> write, int priority = 0) {
-    regions.push_back({base, base + size - 1, read, write, priority});
+  void mapRegion(AT base, int size, std::function<DT(AT)> read, std::function<void(AT, DT)> write, int priority = 0) {
+    regions.push_back({base, (AT)(base + size - 1), read, write, priority});
   }
 
   DT read(AT address) {
@@ -31,6 +31,7 @@ public:
       return best->read(address);
     }
     std::cerr << "Bus read out of range @ " << std::hex << address << std::dec << "\n";
+    return 0; // Return a default value for out-of-range reads
   }
 
   void write(AT address, DT value) {

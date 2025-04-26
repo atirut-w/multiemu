@@ -61,7 +61,7 @@ void Graphics::drawTextMode80x25() {
   auto charset_addr = 0; // Start at beginning of VRAM
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);
   for (int row = 0; row < 16 * 256; row++) {
-    auto char_row = vram.read(charset_addr++);
+    auto char_row = vram[charset_addr++];
     for (int col = 0; col < 8; col++) {
       auto bit = (char_row >> (7 - col)) & 1;
       ImageDrawPixel(&charset_img, col, row, bit ? WHITE : Color{0, 0, 0, 0});
@@ -79,8 +79,8 @@ void Graphics::drawTextMode80x25() {
   auto vram_addr = 4096;
   for (int cy = 0; cy < 25; cy++) {
     for (int cx = 0; cx < 80; cx++) {
-      auto char_index = vram.read(vram_addr++);
-      auto char_attr = vram.read(vram_addr++);
+      auto char_index = vram[vram_addr++];
+      auto char_attr = vram[vram_addr++];
       auto fg = palette[char_attr & 0x0f];
       auto bg = palette[char_attr >> 4];
 
@@ -102,7 +102,7 @@ void Graphics::drawBitmapMode320x200x16() {
   for (int row = 0; row < 200; row++) {
     // 160 bytes per scanline in “linear 4bpp”
     for (int colByte = 0; colByte < 320 / 2; colByte++) {
-      auto b = vram.read(row * (320 / 2) + colByte);
+      auto b = vram[row * (320 / 2) + colByte];
       int p1 = b & 0x0F;
       int p2 = (b >> 4) & 0x0F;
       int x = colByte * 2;

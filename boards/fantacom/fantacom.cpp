@@ -29,51 +29,19 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   clock_speed = 2500000; // 2.5 MHz
   display = true;
 
-  // Create ROM region
-  rom_region = make_unique<MemoryRegionROM>(ROM_SIZE);
-  rom_region->get_data() = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
-  phys.add_region(rom_region.get(), 0);
+  rom = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
+  ram.resize(args.get<int>("--ram"));
 
-  // Create RAM region
-  int ram_size = args.get<int>("--ram");
-  ram_region = make_unique<MemoryRegionRAM>(std::min(ram_size, 512 * KIB));
-  phys.add_region(ram_region.get(), 512 * KIB);
+  // Set up physical memory layout
+  phys.mapRegion(0, 256 * KIB, [this](uint16_t address) -> uint8_t { return rom[address]; }, [this](uint16_t address, uint8_t value) {}, 0);
+  phys.mapRegion(256 * KIB, 256 * KIB, [this](uint16_t address) -> uint8_t { return gfx.vram[address]; }, [this](uint16_t address, uint8_t value) { gfx.vram[address] = value; }, 0);
+  phys.mapRegion(512 * KIB, 512 * KIB, [this](uint16_t address) -> uint8_t { if (address < ram.size()) return ram[address]; else return 0; }, [this](uint16_t address, uint8_t value) { if (address < ram.size()) ram[address] = value; }, 0);
 
-  // Add 256KB VRAM at 256KB into physical address space
-  phys.add_region(&gfx.vram, 256 * KIB);
+  // Virtual memory just goes through MMU
+  virt.mapRegion(0, 64 * KIB, [this](uint16_t address) -> uint8_t { return read(address); }, [this](uint16_t address, uint8_t value) { write(address, value); }, 0);
 
-  // Add I/O regions to I/O address space
-  io.add_region(&mmu_config, 0x00);
-  io.add_region(&gfx.config, 0xf0);
-
-  // No need to set gfx.ram since we're using dedicated VRAM now
-
-  // Create an MMIO region for virtual memory translation (CPU-visible memory)
-  virt_mmio = make_unique<MemoryRegionMMIO>(
-    64 * KIB,
-    [this](size_t addr) { return read(addr); },
-    [this](size_t addr, uint8_t val) { write(addr, val); }
-  );
-  virt.add_region(virt_mmio.get(), 0);
-
-  // Set up program counter display for virtual memory
-  virt.getProgramCounter = [this]() { return static_cast<size_t>(cpu->getProgramCounter()); };
-
-  // Set up program counter display for physical memory (after MMU translation)
-  phys.getProgramCounter = [this]() {
-    auto pc = cpu->getProgramCounter();
-    auto& pagemap = mmu_config.get_data();
-
-    int v_page = pc >> 12;
-    int p_page = pagemap[v_page];
-    int p_addr = (p_page << 12) | (pc & 0xfff);
-    return p_addr;
-  };
-
-  // Add the address spaces to the board
-  add_address_space(&virt);
-  add_address_space(&phys);
-  add_address_space(&io);
+  // Set up I/O ports
+  io.mapRegion(0, 16, [this](uint16_t address) -> uint8_t { return mmu_config[address]; }, [this](uint16_t address, uint8_t value) { mmu_config[address] = value; }, 0);
 }
 
 int FantacomBoard::run(int cycles) {
@@ -87,8 +55,49 @@ int FantacomBoard::run(int cycles) {
 
 void FantacomBoard::draw() { gfx.draw(); }
 
+std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
+  std::vector<MultiEmu::BusInfo> buses;
+  
+  // Add virtual memory bus (CPU view)
+  MultiEmu::BusInfo virtBus;
+  virtBus.name = "Memory (Virtual/CPU)";
+  virtBus.size = 64 * KIB;
+  virtBus.bus_ptr = const_cast<MultiEmu::Bus<uint16_t, uint8_t>*>(&virt);
+  virtBus.addressWidth = MultiEmu::BusWidth::BUS_16BIT;
+  virtBus.getProgramCounter = [this]() { 
+    return static_cast<size_t>(cpu->getProgramCounter()); 
+  };
+  buses.push_back(virtBus);
+  
+  // Add physical memory bus (after MMU translation)
+  MultiEmu::BusInfo physBus;
+  physBus.name = "Memory (Physical)";
+  physBus.size = 1024 * KIB;
+  physBus.bus_ptr = const_cast<MultiEmu::Bus<uint32_t, uint8_t>*>(&phys);
+  physBus.addressWidth = MultiEmu::BusWidth::BUS_32BIT;
+  physBus.getProgramCounter = [this]() {
+    auto pc = cpu->getProgramCounter();
+    auto& pagemap = mmu_config;
+    int v_page = pc >> 12;
+    int p_page = pagemap[v_page];
+    return static_cast<size_t>((p_page << 12) | (pc & 0xfff));
+  };
+  buses.push_back(physBus);
+  
+  // Add I/O bus
+  MultiEmu::BusInfo ioBus;
+  ioBus.name = "I/O Ports";
+  ioBus.size = 256;
+  ioBus.bus_ptr = const_cast<MultiEmu::Bus<uint8_t, uint8_t>*>(&io);
+  ioBus.addressWidth = MultiEmu::BusWidth::BUS_8BIT;
+  // No program counter for I/O bus
+  buses.push_back(ioBus);
+  
+  return buses;
+}
+
 uint8_t FantacomBoard::read(uint16_t address) {
-  auto& pagemap = mmu_config.get_data();
+  auto &pagemap = mmu_config;
 
   int v_page = address >> 12;
   int p_page = pagemap[v_page];
@@ -97,7 +106,7 @@ uint8_t FantacomBoard::read(uint16_t address) {
 }
 
 void FantacomBoard::write(uint16_t address, uint8_t value) {
-  auto& pagemap = mmu_config.get_data();
+  auto &pagemap = mmu_config;
 
   int v_page = address >> 12;
   int p_page = pagemap[v_page];
