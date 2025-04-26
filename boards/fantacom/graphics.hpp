@@ -6,7 +6,7 @@ struct Graphics {
   MultiEmu::MemoryRegionMMIO config;
   MultiEmu::MemoryRegionRAM vram;
 
-  int mode = 1; // Graphics mode
+  int mode = 0; // Graphics mode
 
   Graphics()
       : config(
