@@ -4,12 +4,14 @@
 
 struct Graphics {
   MultiEmu::MemoryRegionRAM config;
-  MultiEmu::MemoryRegion *ram;
   MultiEmu::MemoryRegionRAM vram;
 
-  Graphics() : config(2), vram(256 * 1024) {
+  Graphics() : 
+    config(2),
+    vram(256 * 1024) {
+    // Initialize VRAM with a pattern
     for (int i = 0; i < 256 * 1024; i++) {
-      vram.data[i] = i;
+      vram.write(i, i & 0xFF);
     }
   };
 

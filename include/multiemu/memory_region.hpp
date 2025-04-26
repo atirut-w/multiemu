@@ -3,70 +3,91 @@
 #include <cstdint>
 #include <functional>
 #include <vector>
+#include <string>
 
 namespace MultiEmu {
 
 class MemoryRegion {
 protected:
-  int priority;
   bool backed = false;
-  std::vector<MemoryRegion *> subregions;
 
 public:
-  std::size_t offset;
-  std::size_t size;
+  std::vector<MemoryRegion*> subregions; // Made public for address resolution
+  size_t offset = 0;  // Offset within parent (set by parent)
+  size_t size;        // Size of this region
+  int priority = 0;   // Priority for overlapping regions
 
-  MemoryRegion(std::size_t size) : size(size) {};
-
-  virtual uint8_t read(std::size_t addr);
-  virtual void write(std::size_t addr, uint8_t value);
+  MemoryRegion(size_t size) : size(size) {}
   
-  // Helper methods to reduce duplication in derived classes
-  virtual uint8_t read_internal(std::size_t addr) { return 0; }
-  virtual void write_internal(std::size_t addr, uint8_t value) {}
+  virtual ~MemoryRegion() = default;
 
-  void add_subregion(MemoryRegion *region, std::size_t offset, int priority = 0);
-  void remove_subregion(MemoryRegion *region);
-  virtual MemoryRegion *resolve_address(std::size_t addr);
+  // Access functions - access to memory in this region
+  virtual uint8_t read(size_t addr) { return 0; }
+  virtual void write(size_t addr, uint8_t value) {}
+
+  // No more resolve_region() - that's moved to AddressSpace
+  // We'll keep the subregion management for hierarchical memory organization
+  void add_subregion(MemoryRegion* region, size_t offset, int priority = 0);
+  void remove_subregion(MemoryRegion* region);
+  
+  // Getters
+  bool is_backed() const { return backed; }
 };
 
 class MemoryRegionRAM : public MemoryRegion {
-public:
+private:
   std::vector<uint8_t> data;
 
-  MemoryRegionRAM(std::size_t size) : MemoryRegion(size), data(size) { backed = true; };
+public:
+  MemoryRegionRAM(size_t size)
+    : MemoryRegion(size), data(size, 0) { backed = true; }
 
-  uint8_t read_internal(std::size_t addr) override { return data[addr]; }
-  void write_internal(std::size_t addr, uint8_t value) override { data[addr] = value; }
+  uint8_t read(size_t addr) override { return data[addr]; }
+  void write(size_t addr, uint8_t value) override { data[addr] = value; }
+  
+  // For backward compatibility (temporary)
+  std::vector<uint8_t>& get_data() { return data; }
 };
 
 class MemoryRegionROM : public MemoryRegion {
-public:
+private:
   std::vector<uint8_t> data;
 
-  MemoryRegionROM(std::size_t size) : MemoryRegion(size), data(size) { backed = true; };
+public:
+  MemoryRegionROM(size_t size) 
+    : MemoryRegion(size), data(size, 0) { backed = true; }
 
-  uint8_t read_internal(std::size_t addr) override { return data[addr]; }
-  // No write_internal override for ROM - it's read-only
+  uint8_t read(size_t addr) override { return data[addr]; }
+  // ROM doesn't override write - it's read-only and uses the base class implementation
+
+  // Utility method to load ROM data
+  void load(const std::vector<uint8_t>& source) {
+    size_t copy_size = std::min(source.size(), data.size());
+    std::copy(source.begin(), source.begin() + copy_size, data.begin());
+  }
+  
+  // For backward compatibility (temporary)
+  std::vector<uint8_t>& get_data() { return data; }
 };
 
 class MemoryRegionMMIO : public MemoryRegion {
-  std::function<uint8_t(std::size_t)> read_cb = nullptr;
-  std::function<void(std::size_t, uint8_t)> write_cb = nullptr;
+private:
+  std::function<uint8_t(size_t)> read_cb;
+  std::function<void(size_t, uint8_t)> write_cb;
 
 public:
-  MemoryRegionMMIO(std::size_t size, 
-                  std::function<uint8_t(std::size_t)> read_cb = nullptr,
-                  std::function<void(std::size_t, uint8_t)> write_cb = nullptr) 
-    : MemoryRegion(size), read_cb(read_cb), write_cb(write_cb) { backed = true; };
+  MemoryRegionMMIO(size_t size,
+                 std::function<uint8_t(size_t)> read_cb = nullptr,
+                 std::function<void(size_t, uint8_t)> write_cb = nullptr)
+    : MemoryRegion(size), read_cb(read_cb), write_cb(write_cb) { backed = true; }
 
-  uint8_t read_internal(std::size_t addr) override { 
-    return read_cb ? read_cb(addr) : 0; 
+  uint8_t read(size_t addr) override {
+    return read_cb ? read_cb(addr) : 0;
   }
-  
-  void write_internal(std::size_t addr, uint8_t value) override { 
+
+  void write(size_t addr, uint8_t value) override {
     if (write_cb) write_cb(addr, value);
   }
 };
 
-}
+} // namespace MultiEmu

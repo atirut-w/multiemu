@@ -13,9 +13,6 @@ namespace MultiEmu {
  * Base class for all emulated boards
  */
 class Board {
-protected:
-  std::vector<std::unique_ptr<AddressSpace>> address_spaces;
-
 public:
   virtual ~Board() = default;
 
@@ -41,18 +38,22 @@ public:
    */
   virtual void draw() {}
 
+private:
+  std::vector<AddressSpace *> address_spaces;
+
+public:
   /**
    * Get all address spaces exposed by this board
    */
-  const std::vector<std::unique_ptr<AddressSpace>>& get_address_spaces() const {
+  const std::vector<AddressSpace *>& get_address_spaces() const {
     return address_spaces;
   }
 
   /**
    * Add a new address space to the board
    */
-  void add_address_space(std::unique_ptr<AddressSpace> space) {
-    address_spaces.push_back(std::move(space));
+  void add_address_space(AddressSpace *space) {
+    address_spaces.push_back(space);
   }
 };
 

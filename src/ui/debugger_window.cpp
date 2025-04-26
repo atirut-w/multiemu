@@ -205,9 +205,9 @@ void DebuggerWindow::renderMemoryView() {
       // Show address space selector
       if (ImGui::BeginCombo("Address Space", selectedSpace ? selectedSpace->name.c_str() : "None")) {
         for (const auto& space : spaces) {
-          bool isSelected = (selectedSpace == space.get());
+          bool isSelected = (selectedSpace == space);
           if (ImGui::Selectable(space->name.c_str(), isSelected)) {
-            selectedSpace = space.get();
+            selectedSpace = space;
             memEditContext.addressSpace = selectedSpace;
             // Reset goto address when switching spaces
             memEdit.GotoAddr = 0;
@@ -221,7 +221,7 @@ void DebuggerWindow::renderMemoryView() {
       
       // If no address space is selected yet, select the first one
       if (!selectedSpace && !spaces.empty()) {
-        selectedSpace = spaces[0].get();
+        selectedSpace = spaces[0];
         memEditContext.addressSpace = selectedSpace;
       }
       

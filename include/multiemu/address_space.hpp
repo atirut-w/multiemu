@@ -1,8 +1,10 @@
 #pragma once
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
+#include <vector>
+#include <utility>
+#include "memory_region.hpp"
 
 namespace MultiEmu {
 
@@ -12,21 +14,34 @@ enum class AddressSpaceType {
   CUSTOM  // For any other address spaces
 };
 
-struct AddressSpace {
-  std::string name;
+class AddressSpace {
+private:
+  std::vector<MemoryRegion*> regions;
+
+  // Helper for recursive resolution into subregions
+  std::pair<MemoryRegion*, size_t> resolve_region_recursive(size_t addr);
+
+public:
+  std::string name;        // Made public for UI access
   AddressSpaceType type;
-  size_t size;
-
-  // Callbacks for memory editor integration
-  std::function<uint8_t(size_t)> read;
-  std::function<void(size_t, uint8_t)> write;
-
-  // Optional PC highlight (only applies to program memory spaces)
+  size_t size;             // Made public for UI access
+  
+  // Program counter getter for memory viewer/debugger
   std::function<size_t()> getProgramCounter = nullptr;
 
-  AddressSpace(const std::string &name, AddressSpaceType type, size_t size, std::function<uint8_t(size_t)> read,
-               std::function<void(size_t, uint8_t)> write, std::function<size_t()> getProgramCounter = nullptr)
-      : name(name), type(type), size(size), read(read), write(write), getProgramCounter(getProgramCounter) {}
+  AddressSpace(const std::string &name, AddressSpaceType type, size_t size)
+      : name(name), type(type), size(size) {}
+  
+  ~AddressSpace() = default;
+
+  // Basic memory operations
+  uint8_t read(size_t addr);
+  void write(size_t addr, uint8_t value);
+
+  // Region management
+  void add_region(MemoryRegion* region, size_t offset, int priority = 0);
+  void remove_region(MemoryRegion* region);
+  MemoryRegion* resolve_region(size_t addr);
 };
 
 } // namespace MultiEmu

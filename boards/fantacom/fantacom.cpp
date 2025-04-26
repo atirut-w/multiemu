@@ -29,58 +29,51 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   clock_speed = 2500000; // 2.5 MHz
   display = true;
 
-  phys = make_unique<MemoryRegion>(MIB);
+  // Create ROM region
+  rom_region = make_unique<MemoryRegionROM>(ROM_SIZE);
+  rom_region->get_data() = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
+  phys.add_region(rom_region.get(), 0);
 
-  rom = make_unique<MemoryRegionROM>(ROM_SIZE);
-  rom->data = Utils::load_rom(args.get<filesystem::path>("program"), ROM_SIZE);
-  phys->add_subregion(rom.get(), 0);
-
+  // Create RAM region
   int ram_size = args.get<int>("--ram");
-  ram = make_unique<MemoryRegionRAM>(std::min(ram_size, 512 * KIB));
-  phys->add_subregion(ram.get(), 512 * KIB);
+  ram_region = make_unique<MemoryRegionRAM>(std::min(ram_size, 512 * KIB));
+  phys.add_region(ram_region.get(), 512 * KIB);
 
   // Add 256KB VRAM at 256KB into physical address space
-  phys->add_subregion(&gfx.vram, 256 * KIB);
+  phys.add_region(&gfx.vram, 256 * KIB);
 
-  io = make_unique<MemoryRegion>(256);
-  io->add_subregion(&mmu_config, 0);
-  io->add_subregion(&gfx.config, 16);
+  // Add I/O regions to I/O address space
+  io.add_region(&mmu_config, 0x00);
+  io.add_region(&gfx.config, 0xf0);
 
-  gfx.ram = phys.get();
+  // No need to set gfx.ram since we're using dedicated VRAM now
 
-  // Create memory address space (virtual memory after MMU translation)
-  auto memorySpace = std::make_unique<AddressSpace>(
-      "Memory (Virtual)", AddressSpaceType::MEMORY, 64 * KIB, [this](size_t addr) { return read(addr); },
-      [this](size_t addr, uint8_t val) { write(addr, val); },
-      [this]() { return static_cast<size_t>(cpu->getProgramCounter()); });
-  add_address_space(std::move(memorySpace));
+  // Create an MMIO region for virtual memory translation (CPU-visible memory)
+  virt_mmio = make_unique<MemoryRegionMMIO>(
+    64 * KIB,
+    [this](size_t addr) { return read(addr); },
+    [this](size_t addr, uint8_t val) { write(addr, val); }
+  );
+  virt.add_region(virt_mmio.get(), 0);
 
-  // Create physical memory address space (direct access, no MMU)
-  auto physicalSpace = std::make_unique<AddressSpace>(
-      "Memory (Physical)", AddressSpaceType::MEMORY, MIB, [this](size_t addr) { return this->phys->read(addr); },
-      [this](size_t addr, uint8_t val) { this->phys->write(addr, val); },
-      [this]() {
-        auto pc = cpu->getProgramCounter();
-        auto pagemap = mmu_config.data;
+  // Set up program counter display for virtual memory
+  virt.getProgramCounter = [this]() { return static_cast<size_t>(cpu->getProgramCounter()); };
 
-        int v_page = pc >> 12;
-        int p_page = pagemap[v_page];
-        int p_addr = (p_page << 12) | (pc & 0xfff);
-        return p_addr;
-      });
-  add_address_space(std::move(physicalSpace));
+  // Set up program counter display for physical memory (after MMU translation)
+  phys.getProgramCounter = [this]() {
+    auto pc = cpu->getProgramCounter();
+    auto& pagemap = mmu_config.get_data();
 
-  // Create I/O space
-  auto ioSpace = std::make_unique<AddressSpace>(
-      "I/O", AddressSpaceType::IO, 256, [this](size_t addr) { return in(addr); },
-      [this](size_t addr, uint8_t val) { out(addr, val); });
-  add_address_space(std::move(ioSpace));
+    int v_page = pc >> 12;
+    int p_page = pagemap[v_page];
+    int p_addr = (p_page << 12) | (pc & 0xfff);
+    return p_addr;
+  };
 
-  // Create VRAM address space (for direct video memory access)
-  auto vramSpace = std::make_unique<AddressSpace>(
-      "VRAM", AddressSpaceType::CUSTOM, 256 * KIB, [this](size_t addr) { return gfx.vram.read(addr); },
-      [this](size_t addr, uint8_t val) { gfx.vram.write(addr, val); });
-  add_address_space(std::move(vramSpace));
+  // Add the address spaces to the board
+  add_address_space(&virt);
+  add_address_space(&phys);
+  add_address_space(&io);
 }
 
 int FantacomBoard::run(int cycles) {
@@ -95,23 +88,23 @@ int FantacomBoard::run(int cycles) {
 void FantacomBoard::draw() { gfx.draw(); }
 
 uint8_t FantacomBoard::read(uint16_t address) {
-  auto pagemap = mmu_config.data;
+  auto& pagemap = mmu_config.get_data();
 
   int v_page = address >> 12;
   int p_page = pagemap[v_page];
   int p_addr = (p_page << 12) | (address & 0xfff);
-  return phys->read(p_addr);
+  return phys.read(p_addr);
 }
 
 void FantacomBoard::write(uint16_t address, uint8_t value) {
-  auto pagemap = mmu_config.data;
+  auto& pagemap = mmu_config.get_data();
 
   int v_page = address >> 12;
   int p_page = pagemap[v_page];
   int p_addr = (p_page << 12) | (address & 0xfff);
-  phys->write(p_addr, value);
+  phys.write(p_addr, value);
 }
 
-uint8_t FantacomBoard::in(uint16_t address) { return io->read(address); }
+uint8_t FantacomBoard::in(uint16_t address) { return io.read(address); }
 
-void FantacomBoard::out(uint16_t address, uint8_t value) { io->write(address, value); }
+void FantacomBoard::out(uint16_t address, uint8_t value) { io.write(address, value); }

@@ -25,6 +25,7 @@ add_executable(multiemu
     src/display.cpp
     src/utils.cpp
     src/memory_region.cpp
+    src/address_space.cpp
 
     src/ui/debugger_window.cpp
     src/ui/main_menu_bar.cpp
