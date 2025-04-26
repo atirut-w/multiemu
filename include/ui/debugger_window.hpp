@@ -10,6 +10,7 @@ namespace MultiEmu {
 
 // Forward declaration
 class Board;
+class Bus;
 struct BusInfo;
 
 // Context for memory editor to access the selected bus

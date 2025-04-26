@@ -12,16 +12,19 @@ class FantacomBoard : public MultiEmu::Board {
 public:
   Graphics gfx;
 
-  MultiEmu::Bus<uint16_t, uint8_t> virt;
-  MultiEmu::Bus<uint32_t, uint8_t> phys;
-  MultiEmu::Bus<uint8_t, uint8_t> io;
+  MultiEmu::Bus virt;
+  MultiEmu::Bus phys;
+  MultiEmu::Bus io;
 
   std::vector<uint8_t> rom;
   std::vector<uint8_t> ram;
   uint8_t mmu_config[0x10];
   
-  // Constructor to initialize address spaces
-  FantacomBoard() {}
+  // Constructor to initialize buses with appropriate address widths
+  FantacomBoard() 
+    : virt(MultiEmu::Bus::Width::BUS_16BIT),
+      phys(MultiEmu::Bus::Width::BUS_32BIT),
+      io(MultiEmu::Bus::Width::BUS_8BIT) {}
 
   virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;

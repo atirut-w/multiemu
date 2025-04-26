@@ -6,27 +6,18 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <any>
 
 namespace MultiEmu {
 
-/**
- * Defines the address width for buses to enable proper type casting
- */
-enum class BusWidth {
-  BUS_8BIT,
-  BUS_16BIT,
-  BUS_32BIT
-};
+// Forward declaration
+class Bus;
 
 /**
  * Information about a bus exposed for debugging
  */
 struct BusInfo {
   std::string name;        // Display name of the bus
-  size_t size;             // Size of addressable space
-  std::any bus_ptr;        // Pointer to the bus (stored as std::any)
-  BusWidth addressWidth;   // Width of address bus
+  Bus* bus;                // Pointer to the bus
   std::function<size_t()> getProgramCounter; // Function to get program counter for highlighting (nullptr if not applicable)
 };
 

@@ -33,15 +33,33 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   ram.resize(args.get<int>("--ram"));
 
   // Set up physical memory layout
-  phys.mapRegion(0, 256 * KIB, [this](uint16_t address) -> uint8_t { return rom[address]; }, [this](uint16_t address, uint8_t value) {}, 0);
-  phys.mapRegion(256 * KIB, 256 * KIB, [this](uint16_t address) -> uint8_t { return gfx.vram[address]; }, [this](uint16_t address, uint8_t value) { gfx.vram[address] = value; }, 0);
-  phys.mapRegion(512 * KIB, 512 * KIB, [this](uint16_t address) -> uint8_t { if (address < ram.size()) return ram[address]; else return 0; }, [this](uint16_t address, uint8_t value) { if (address < ram.size()) ram[address] = value; }, 0);
+  phys.mapRegion(0, 256 * KIB, 
+    [this](uint32_t address) -> uint8_t { return rom[address]; }, 
+    [this](uint32_t address, uint8_t value) {}, 0);
+  
+  phys.mapRegion(256 * KIB, 256 * KIB, 
+    [this](uint32_t address) -> uint8_t { return gfx.vram[address - 256 * KIB]; }, 
+    [this](uint32_t address, uint8_t value) { gfx.vram[address - 256 * KIB] = value; }, 0);
+  
+  phys.mapRegion(512 * KIB, 512 * KIB, 
+    [this](uint32_t address) -> uint8_t { 
+      uint32_t offset = address - 512 * KIB;
+      if (offset < ram.size()) return ram[offset]; else return 0; 
+    }, 
+    [this](uint32_t address, uint8_t value) { 
+      uint32_t offset = address - 512 * KIB;
+      if (offset < ram.size()) ram[offset] = value; 
+    }, 0);
 
   // Virtual memory just goes through MMU
-  virt.mapRegion(0, 64 * KIB, [this](uint16_t address) -> uint8_t { return read(address); }, [this](uint16_t address, uint8_t value) { write(address, value); }, 0);
+  virt.mapRegion16(0, 64 * KIB, 
+    [this](uint16_t address) -> uint8_t { return read(address); }, 
+    [this](uint16_t address, uint8_t value) { write(address, value); }, 0);
 
   // Set up I/O ports
-  io.mapRegion(0, 16, [this](uint16_t address) -> uint8_t { return mmu_config[address]; }, [this](uint16_t address, uint8_t value) { mmu_config[address] = value; }, 0);
+  io.mapRegion8(0, 16, 
+    [this](uint8_t address) -> uint8_t { return mmu_config[address]; }, 
+    [this](uint8_t address, uint8_t value) { mmu_config[address] = value; }, 0);
 }
 
 int FantacomBoard::run(int cycles) {
@@ -61,9 +79,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   // Add virtual memory bus (CPU view)
   MultiEmu::BusInfo virtBus;
   virtBus.name = "Memory (Virtual/CPU)";
-  virtBus.size = 64 * KIB;
-  virtBus.bus_ptr = const_cast<MultiEmu::Bus<uint16_t, uint8_t>*>(&virt);
-  virtBus.addressWidth = MultiEmu::BusWidth::BUS_16BIT;
+  virtBus.bus = const_cast<MultiEmu::Bus*>(&virt);
   virtBus.getProgramCounter = [this]() { 
     return static_cast<size_t>(cpu->getProgramCounter()); 
   };
@@ -72,9 +88,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   // Add physical memory bus (after MMU translation)
   MultiEmu::BusInfo physBus;
   physBus.name = "Memory (Physical)";
-  physBus.size = 1024 * KIB;
-  physBus.bus_ptr = const_cast<MultiEmu::Bus<uint32_t, uint8_t>*>(&phys);
-  physBus.addressWidth = MultiEmu::BusWidth::BUS_32BIT;
+  physBus.bus = const_cast<MultiEmu::Bus*>(&phys);
   physBus.getProgramCounter = [this]() {
     auto pc = cpu->getProgramCounter();
     auto& pagemap = mmu_config;
@@ -87,9 +101,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   // Add I/O bus
   MultiEmu::BusInfo ioBus;
   ioBus.name = "I/O Ports";
-  ioBus.size = 256;
-  ioBus.bus_ptr = const_cast<MultiEmu::Bus<uint8_t, uint8_t>*>(&io);
-  ioBus.addressWidth = MultiEmu::BusWidth::BUS_8BIT;
+  ioBus.bus = const_cast<MultiEmu::Bus*>(&io);
   // No program counter for I/O bus
   buses.push_back(ioBus);
   
@@ -114,6 +126,10 @@ void FantacomBoard::write(uint16_t address, uint8_t value) {
   phys.write(p_addr, value);
 }
 
-uint8_t FantacomBoard::in(uint16_t address) { return io.read(address); }
+uint8_t FantacomBoard::in(uint16_t address) { 
+  return io.read8(address & 0xFF); 
+}
 
-void FantacomBoard::out(uint16_t address, uint8_t value) { io.write(address, value); }
+void FantacomBoard::out(uint16_t address, uint8_t value) { 
+  io.write8(address & 0xFF, value); 
+}

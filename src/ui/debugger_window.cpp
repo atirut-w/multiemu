@@ -8,66 +8,26 @@ namespace MultiEmu {
 // Memory read/write callbacks for the memory editor
 static ImU8 MemoryReadFn(const ImU8* mem, size_t addr, void* user_data) {
   MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
-  if (!context || !context->selectedBus || !context->selectedBus->bus_ptr.has_value()) {
+  if (!context || !context->selectedBus || !context->selectedBus->bus) {
     return 0;
   }
 
   const BusInfo& busInfo = *context->selectedBus;
   
-  // Dispatch based on the bus address width
-  try {
-    switch (busInfo.addressWidth) {
-      case BusWidth::BUS_8BIT: {
-        auto bus_ptr = std::any_cast<Bus<uint8_t, uint8_t>*>(busInfo.bus_ptr);
-        return bus_ptr->read(static_cast<uint8_t>(addr));
-      }
-      case BusWidth::BUS_32BIT: {
-        auto bus_ptr = std::any_cast<Bus<uint32_t, uint8_t>*>(busInfo.bus_ptr);
-        return bus_ptr->read(static_cast<uint32_t>(addr));
-      }
-      case BusWidth::BUS_16BIT:
-      default: {
-        auto bus_ptr = std::any_cast<Bus<uint16_t, uint8_t>*>(busInfo.bus_ptr);
-        return bus_ptr->read(static_cast<uint16_t>(addr));
-      }
-    }
-  } catch (const std::bad_any_cast& e) {
-    // Handle error
-    return 0;
-  }
+  // Simply call the bus read function - no need for type dispatch anymore
+  return busInfo.bus->read(static_cast<uint32_t>(addr));
 }
 
 static void MemoryWriteFn(ImU8* mem, size_t addr, ImU8 value, void* user_data) {
   MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
-  if (!context || !context->selectedBus || !context->selectedBus->bus_ptr.has_value()) {
+  if (!context || !context->selectedBus || !context->selectedBus->bus) {
     return;
   }
 
   const BusInfo& busInfo = *context->selectedBus;
   
-  // Dispatch based on the bus address width
-  try {
-    switch (busInfo.addressWidth) {
-      case BusWidth::BUS_8BIT: {
-        auto bus_ptr = std::any_cast<Bus<uint8_t, uint8_t>*>(busInfo.bus_ptr);
-        bus_ptr->write(static_cast<uint8_t>(addr), value);
-        break;
-      }
-      case BusWidth::BUS_32BIT: {
-        auto bus_ptr = std::any_cast<Bus<uint32_t, uint8_t>*>(busInfo.bus_ptr);
-        bus_ptr->write(static_cast<uint32_t>(addr), value);
-        break;
-      }
-      case BusWidth::BUS_16BIT:
-      default: {
-        auto bus_ptr = std::any_cast<Bus<uint16_t, uint8_t>*>(busInfo.bus_ptr);
-        bus_ptr->write(static_cast<uint16_t>(addr), value);
-        break;
-      }
-    }
-  } catch (const std::bad_any_cast& e) {
-    // Handle error
-  }
+  // Simply call the bus write function - no need for type dispatch anymore
+  busInfo.bus->write(static_cast<uint32_t>(addr), value);
 }
 
 // Highlight the current program counter
@@ -295,7 +255,9 @@ void DebuggerWindow::renderMemoryView() {
       
       // Show memory editor if a bus is selected
       if (selectedBus) {
-        memEdit.DrawContents(nullptr, selectedBus->size, 0);
+        // Get the max address for the bus's width
+        size_t maxSize = selectedBus->bus->getMaxAddress() + 1;
+        memEdit.DrawContents(nullptr, maxSize, 0);
       }
     }
   }
