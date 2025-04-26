@@ -3,12 +3,13 @@
 #include "raylib.h"
 #include <array>
 #include <cstdint>
+#include <iostream>
 
 using namespace std;
 using namespace MultiEmu;
 
 array<Color, 16> palette = {
-    Color{0, 0, 0, 255},       // Black
+    Color{0, 0, 0, 255},  // Black
     {0, 0, 170, 255},     // Blue
     {0, 170, 0, 255},     // Green
     {0, 170, 170, 255},   // Cyan
@@ -27,6 +28,18 @@ array<Color, 16> palette = {
 };
 
 void Graphics::draw() {
+  int mode = config.read(0);
+
+  switch (mode) {
+  default:
+    std::cerr << "Unknown graphics mode: " << mode << std::endl;
+  case 0:
+    drawTextMode80x25();
+    break;
+  }
+}
+
+void Graphics::drawTextMode80x25() {
   // Character set is now in the dedicated VRAM
   auto charset_addr = 0; // Start at beginning of VRAM
   auto charset_img = GenImageColor(8, 16 * 256, BLACK);

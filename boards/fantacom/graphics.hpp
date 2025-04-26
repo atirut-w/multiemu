@@ -16,4 +16,5 @@ struct Graphics {
   };
 
   void draw();
+  void drawTextMode80x25();
 };
