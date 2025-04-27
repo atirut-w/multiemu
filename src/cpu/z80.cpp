@@ -16,12 +16,10 @@ struct Z80::Impl {
   Impl(Z80 *parent) {
     // Initialize the Z80 CPU
     pins = z80_init(&cpu);
-    
-    // Setup memory callbacks indirectly by passing pins to tick function
   }
   
-  // Helper function to handle memory and IO access
-  uint64_t tick(uint64_t pins) {
+  // Process memory and IO access using callbacks
+  void handleMemoryAndIO() {
     // Check if memory read/write is requested
     if (pins & Z80_MREQ) {
       uint16_t addr = Z80_GET_ADDR(pins);
@@ -47,7 +45,6 @@ struct Z80::Impl {
         ioWrite(port, data);
       }
     }
-    return pins;
   }
   
   // Memory access functions using the parent's callbacks
@@ -158,16 +155,32 @@ int Z80::execute(int cycles) {
   
   // Run for the requested number of cycles
   while (executed < cycles) {
-    // Tick the CPU
+    // Tick the CPU and handle memory/IO
     pImpl->pins = z80_tick(&pImpl->cpu, pImpl->pins);
-    
-    // Process memory and IO requests
-    pImpl->pins = pImpl->tick(pImpl->pins);
+    pImpl->handleMemoryAndIO();
     
     executed++;
   }
   
   return executed;
+}
+
+// Tick function for direct pin-level execution
+uint64_t Z80::tick(uint64_t pins) {
+  // Save the input pins
+  pImpl->pins = pins;
+  
+  // Tick the CPU
+  pImpl->pins = z80_tick(&pImpl->cpu, pImpl->pins);
+  
+  // If no peripheral handled memory/IO, use the default handlers
+  if ((pImpl->pins & (Z80_MREQ|Z80_IORQ)) && 
+      ((pImpl->pins & (Z80_RD|Z80_WR)))) {
+    pImpl->handleMemoryAndIO();
+  }
+  
+  // Return the updated pins
+  return pImpl->pins;
 }
 
 void Z80::reset() {
@@ -307,6 +320,15 @@ void Z80::requestInterrupt(uint32_t vector, bool nmi) {
 bool Z80::areInterruptsEnabled() const {
   // IFF1 determines if interrupts are enabled
   return pImpl->cpu.iff1;
+}
+
+// Pin access for direct peripheral connections
+uint64_t Z80::getPins() const {
+  return pImpl->pins;
+}
+
+void Z80::setPins(uint64_t pins) {
+  pImpl->pins = pins;
 }
 
 } // namespace MultiEmu

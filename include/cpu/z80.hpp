@@ -1,5 +1,7 @@
 #include "multiemu/cpu.hpp"
 #include <memory>
+#include <functional>
+#include <cstdint>
 
 namespace MultiEmu {
 
@@ -42,6 +44,13 @@ public:
   // Interrupt interface
   virtual void requestInterrupt(uint32_t vector = 0, bool nmi = false) override;
   virtual bool areInterruptsEnabled() const override;
+  
+  // Pin access for direct connection to peripherals
+  uint64_t getPins() const;
+  void setPins(uint64_t pins);
+  
+  // Tick function that returns new pin state
+  uint64_t tick(uint64_t pins);
 };
 
 } // namespace MultiEmu

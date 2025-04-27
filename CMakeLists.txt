@@ -41,3 +41,4 @@ install(TARGETS multiemu DESTINATION bin)
 
 add_subdirectory(boards)
 add_subdirectory(cpus)
+add_subdirectory(src/devices)
