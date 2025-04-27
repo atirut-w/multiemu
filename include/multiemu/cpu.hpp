@@ -73,7 +73,7 @@ public:
   virtual std::map<std::string, uint64_t> getAllRegisters() = 0;
   
   // Program counter access for memory view positioning
-  virtual size_t getProgramCounter() = 0;
+  virtual size_t getProgramCounter() const = 0;
   
   // Interrupt interface
   virtual void requestInterrupt(uint32_t vector = 0, bool nmi = false) { /* Default no-op */ }

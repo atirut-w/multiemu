@@ -141,13 +141,8 @@ int main(int argc, const char *argv[]) {
       
       // Check if execution was halted
       if (cycles_ran == 0) {
-        if (board->cpu) {
-          // CPU returned 0 cycles - likely an issue, so pause
-          debugger.cpuPaused = true;
-        } else {
-          // Not a CPU issue, so actually stop
-          run = false;
-        }
+        // CPU returned 0 cycles - likely an issue, so pause
+        debugger.cpuPaused = true;
       }
     }
     if (board->display) {
@@ -204,7 +199,7 @@ int main(int argc, const char *argv[]) {
     }
 
     // Render debugger window if open
-    if (debugger.open && board->cpu) {
+    if (debugger.open) {
       debugger.render();
     }
 

@@ -30,7 +30,6 @@ public:
 
   bool display = false;
   int clock_speed = 4000000;
-  std::unique_ptr<CPU> cpu;
 
   /**
    * Set up the board with the given arguments
@@ -55,6 +54,12 @@ public:
    * @return Vector of BusInfo structures
    */
   virtual std::vector<BusInfo> get_buses() const { return {}; }
+  
+  /**
+   * Get the CPU associated with this board
+   * @return Pointer to the CPU
+   */
+  virtual CPU* getCPU() = 0;
 };
 
 } // namespace MultiEmu

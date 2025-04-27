@@ -19,13 +19,11 @@ using namespace MultiEmu;
 static BoardRegistry::Register<FantacomBoard> registration("fantacom", "Z80-based fantasy computer");
 
 void FantacomBoard::setup(const ArgumentParser &args) {
-  cpu = std::make_unique<MultiEmu::Z80>();
-
   // Set up memory access callbacks
-  cpu->read = [this](uint16_t address) { return read(address); };
-  cpu->write = [this](uint16_t address, uint8_t value) { write(address, value); };
-  cpu->in = [this](uint16_t address) { return in(address); };
-  cpu->out = [this](uint16_t address, uint8_t value) { out(address, value); };
+  z80.read = [this](uint16_t address) { return read(address); };
+  z80.write = [this](uint16_t address, uint8_t value) { write(address, value); };
+  z80.in = [this](uint16_t address) { return in(address); };
+  z80.out = [this](uint16_t address, uint8_t value) { out(address, value); };
   clock_speed = 2500000; // 2.5 MHz
   display = true;
 
@@ -68,7 +66,7 @@ void FantacomBoard::setup(const ArgumentParser &args) {
 
 int FantacomBoard::run(int cycles) {
   try {
-    return cpu->execute(cycles);
+    return z80.execute(cycles);
   } catch (const runtime_error &e) {
     cerr << "Error in CPU: " << e.what() << endl;
     return -1;
@@ -84,7 +82,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   MultiEmu::BusInfo virtBus;
   virtBus.name = "Memory (Virtual/CPU)";
   virtBus.bus = const_cast<MultiEmu::Bus *>(&virt);
-  virtBus.getProgramCounter = [this]() { return static_cast<size_t>(cpu->getProgramCounter()); };
+  virtBus.getProgramCounter = [this]() { return static_cast<size_t>(z80.getProgramCounter()); };
   buses.push_back(virtBus);
 
   // Add physical memory bus (after MMU translation)
@@ -92,7 +90,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   physBus.name = "Memory (Physical)";
   physBus.bus = const_cast<MultiEmu::Bus *>(&phys);
   physBus.getProgramCounter = [this]() {
-    auto pc = cpu->getProgramCounter();
+    auto pc = z80.getProgramCounter();
     auto &pagemap = mmu_config;
     int v_page = pc >> 12;
     int p_page = pagemap[v_page];

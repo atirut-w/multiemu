@@ -20,6 +20,9 @@ public:
   std::vector<uint8_t> ram;
   uint8_t mmu_config[0x10];
   
+  // Z80 CPU instance as a direct member
+  MultiEmu::Z80 z80;
+  
   // Constructor to initialize buses with appropriate address space sizes
   FantacomBoard() 
     : virt(0xFFFF),       // 64KB virtual memory
@@ -32,6 +35,9 @@ public:
   
   // Expose buses for debugging
   virtual std::vector<MultiEmu::BusInfo> get_buses() const override;
+  
+  // Implementation of CPU getter
+  virtual MultiEmu::CPU* getCPU() override { return &z80; }
   
   uint8_t read(uint16_t address);
   void write(uint16_t address, uint8_t value);

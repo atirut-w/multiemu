@@ -37,7 +37,7 @@ public:
   virtual std::map<std::string, uint64_t> getAllRegisters() override;
 
   // Program counter access for memory view positioning
-  virtual size_t getProgramCounter() override;
+  virtual size_t getProgramCounter() const override;
   
   // Interrupt interface
   virtual void requestInterrupt(uint32_t vector = 0, bool nmi = false) override;

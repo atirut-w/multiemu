@@ -98,7 +98,7 @@ void DebuggerWindow::renderControlButtons() {
     cpuPaused = false;
     
     // Execute a single instruction
-    board->cpu->execute(1);
+    board->getCPU()->execute(1);
     
     // Restore paused state (usually keeping it paused)
     cpuPaused = wasPaused || true;
@@ -106,18 +106,18 @@ void DebuggerWindow::renderControlButtons() {
 
   ImGui::SameLine();
   if (ImGui::Button("Reset")) {
-    board->cpu->reset();
+    board->getCPU()->reset();
   }
 }
 
 void DebuggerWindow::renderRegisters() {
   if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen)) {
     // Get CPU metadata and current register values
-    auto registers = board->cpu->getAllRegisters();
-    auto regInfo = board->cpu->getRegisterInfo();
-    auto regGroups = board->cpu->getRegisterGroups();
-    auto flags = board->cpu->getFlagDefinitions();
-    auto capabilities = board->cpu->getDebuggerCapabilities();
+    auto registers = board->getCPU()->getAllRegisters();
+    auto regInfo = board->getCPU()->getRegisterInfo();
+    auto regGroups = board->getCPU()->getRegisterGroups();
+    auto flags = board->getCPU()->getFlagDefinitions();
+    auto capabilities = board->getCPU()->getDebuggerCapabilities();
 
     // Create mapping of register name to info for quick lookup
     std::map<std::string, RegisterInfo> regInfoMap;

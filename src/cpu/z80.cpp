@@ -280,7 +280,7 @@ std::map<std::string, uint64_t> Z80::getAllRegisters() {
 }
 
 // Program counter access
-size_t Z80::getProgramCounter() { return pImpl->cpu.reg.PC; }
+size_t Z80::getProgramCounter() const { return pImpl->cpu.reg.PC; }
 
 // Interrupt interface implementation
 void Z80::requestInterrupt(uint32_t vector, bool nmi) {
