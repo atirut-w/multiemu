@@ -2,41 +2,36 @@
 #include "argparse/argparse.hpp"
 #include "cpu/z80.hpp"
 #include "fantacom/graphics.hpp"
-#include "multiemu/address_space.hpp"
 #include "multiemu/board.hpp"
-#include "multiemu/memory_region.hpp"
 #include <cstdint>
 #include <memory>
+#include <multiemu//bus.hpp>
+#include <vector>
 
 class FantacomBoard : public MultiEmu::Board {
-private:
-  // Memory regions
-  std::unique_ptr<MultiEmu::MemoryRegionROM> rom_region;
-  std::unique_ptr<MultiEmu::MemoryRegionRAM> ram_region;
-  std::unique_ptr<MultiEmu::MemoryRegion> io_region;
-  std::unique_ptr<MultiEmu::MemoryRegionMMIO> virt_mmio;
-
 public:
   Graphics gfx;
 
-  // Address spaces
-  MultiEmu::AddressSpace virt;
-  MultiEmu::AddressSpace phys; 
-  MultiEmu::AddressSpace io;
+  MultiEmu::Bus virt;
+  MultiEmu::Bus phys;
+  MultiEmu::Bus io;
 
-  // Global MMU config
-  MultiEmu::MemoryRegionRAM mmu_config{16};
+  std::vector<uint8_t> rom;
+  std::vector<uint8_t> ram;
+  uint8_t mmu_config[0x10];
   
-  // Constructor to initialize address spaces
-  FantacomBoard() : 
-    virt("Memory (Virtual)", MultiEmu::AddressSpaceType::MEMORY, 64 * 1024),
-    phys("Memory (Physical)", MultiEmu::AddressSpaceType::MEMORY, 1024 * 1024),
-    io("I/O", MultiEmu::AddressSpaceType::IO, 256)
-  {}
+  // Constructor to initialize buses with appropriate address space sizes
+  FantacomBoard() 
+    : virt(0xFFFF),       // 64KB virtual memory
+      phys(0xFFFFF),      // 1MB physical memory
+      io(0xFF) {}         // 256 byte I/O space
 
   virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;
   virtual void draw() override;
+  
+  // Expose buses for debugging
+  virtual std::vector<MultiEmu::BusInfo> get_buses() const override;
   
   uint8_t read(uint16_t address);
   void write(uint16_t address, uint8_t value);

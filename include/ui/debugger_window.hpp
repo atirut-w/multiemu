@@ -2,14 +2,20 @@
 #include "imgui.h"
 #include "imgui_memory_editor/imgui_memory_editor.h"
 #include "multiemu/board.hpp"
-#include "multiemu/address_space.hpp"
 #include "ui/window.hpp"
+#include <string>
+#include <vector>
 
 namespace MultiEmu {
 
-// Context for memory editor to access the selected address space
+// Forward declaration
+class Board;
+class Bus;
+struct BusInfo;
+
+// Context for memory editor to access the selected bus
 struct MemoryEditorContext {
-  AddressSpace* addressSpace = nullptr;
+  const BusInfo* selectedBus = nullptr;
 };
 
 class DebuggerWindow : public Window {
@@ -18,7 +24,10 @@ public:
   bool cpuPaused;
   MemoryEditor memEdit;
   MemoryEditorContext memEditContext;
-  AddressSpace* selectedSpace = nullptr;
+  
+  // Available buses and currently selected bus
+  std::vector<BusInfo> availableBuses;
+  const BusInfo* selectedBus = nullptr;
 
   DebuggerWindow(Board* board, bool initialPauseState = false);
   
@@ -28,6 +37,9 @@ private:
   void renderControlButtons();
   void renderRegisters();
   void renderMemoryView();
+  
+  // Update available buses from board
+  void updateAvailableBuses();
 };
 
 }

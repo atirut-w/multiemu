@@ -1,32 +1,17 @@
 #pragma once
-#include "multiemu/memory_region.hpp"
+#include "multiemu/units.hpp"
 #include <cstdint>
 
 struct Graphics {
-  MultiEmu::MemoryRegionMMIO config;
-  MultiEmu::MemoryRegionRAM vram;
+  uint8_t config[0];
+  uint8_t vram[256 * KIB];
 
   int mode = 0; // Graphics mode
 
-  Graphics()
-      : config(
-            1,
-            [this](size_t addr) {
-              if (addr == 0) {
-                return mode;
-              }
-              return 0;
-            },
-            [&](size_t addr, uint8_t value) {
-              if (addr == 0) {
-                mode = value;
-                modeset();
-              }
-            }),
-        vram(256 * 1024) {
+  Graphics() {
     // Initialize VRAM with a pattern
-    for (int i = 0; i < 256 * 1024; i++) {
-      vram.write(i, i & 0xFF);
+    for (int i = 0; i < 256 * KIB; i++) {
+      vram[i] = i;
     }
 
     modeset();

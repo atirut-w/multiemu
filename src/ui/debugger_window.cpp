@@ -1,5 +1,6 @@
 #include "ui/debugger_window.hpp"
 #include "imgui.h"
+#include "multiemu/bus.hpp"
 #include <map>
 
 namespace MultiEmu {
@@ -7,24 +8,33 @@ namespace MultiEmu {
 // Memory read/write callbacks for the memory editor
 static ImU8 MemoryReadFn(const ImU8* mem, size_t addr, void* user_data) {
   MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
-  if (context && context->addressSpace) {
-    return context->addressSpace->read(addr);
+  if (!context || !context->selectedBus || !context->selectedBus->bus) {
+    return 0;
   }
-  return 0;
+
+  const BusInfo& busInfo = *context->selectedBus;
+  
+  // Simply call the bus read function - no need for type dispatch anymore
+  return busInfo.bus->read(static_cast<uint32_t>(addr));
 }
 
 static void MemoryWriteFn(ImU8* mem, size_t addr, ImU8 value, void* user_data) {
   MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
-  if (context && context->addressSpace) {
-    context->addressSpace->write(addr, value);
+  if (!context || !context->selectedBus || !context->selectedBus->bus) {
+    return;
   }
+
+  const BusInfo& busInfo = *context->selectedBus;
+  
+  // Simply call the bus write function - no need for type dispatch anymore
+  busInfo.bus->write(static_cast<uint32_t>(addr), value);
 }
 
 // Highlight the current program counter
 static bool MemoryHighlightFn(const ImU8* mem, size_t addr, void* user_data) {
   MemoryEditorContext* context = static_cast<MemoryEditorContext*>(user_data);
-  if (context && context->addressSpace && context->addressSpace->getProgramCounter) {
-    return addr == context->addressSpace->getProgramCounter();
+  if (context && context->selectedBus && context->selectedBus->getProgramCounter) {
+    return addr == context->selectedBus->getProgramCounter();
   }
   return false;
 }
@@ -44,6 +54,9 @@ DebuggerWindow::DebuggerWindow(Board* board, bool initialPauseState)
   memEdit.OptShowDataPreview = true;
   memEdit.OptShowOptions = true;
   memEdit.OptUpperCaseHex = true;
+  
+  // Initialize buses
+  updateAvailableBuses();
 }
 
 void DebuggerWindow::render() {
@@ -53,6 +66,24 @@ void DebuggerWindow::render() {
     renderMemoryView();
   }
   ImGui::End();
+}
+
+void DebuggerWindow::updateAvailableBuses() {
+  // Clear old buses
+  availableBuses.clear();
+  selectedBus = nullptr;
+  memEditContext.selectedBus = nullptr;
+  
+  // Get new buses from board
+  if (board) {
+    availableBuses = board->get_buses();
+    
+    // Select the first bus by default
+    if (!availableBuses.empty()) {
+      selectedBus = &availableBuses[0];
+      memEditContext.selectedBus = selectedBus;
+    }
+  }
 }
 
 void DebuggerWindow::renderControlButtons() {
@@ -196,20 +227,23 @@ void DebuggerWindow::renderRegisters() {
 
 void DebuggerWindow::renderMemoryView() {
   if (ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen)) {
-    // Get available address spaces from board
-    const auto& spaces = board->get_address_spaces();
+    // Make sure buses are up to date
+    if (availableBuses.empty()) {
+      updateAvailableBuses();
+    }
     
-    if (spaces.empty()) {
-      ImGui::Text("No address spaces available.");
+    // Check if we have any buses to show
+    if (availableBuses.empty()) {
+      ImGui::Text("No buses available for debugging.");
     } else {
-      // Show address space selector
-      if (ImGui::BeginCombo("Address Space", selectedSpace ? selectedSpace->name.c_str() : "None")) {
-        for (const auto& space : spaces) {
-          bool isSelected = (selectedSpace == space);
-          if (ImGui::Selectable(space->name.c_str(), isSelected)) {
-            selectedSpace = space;
-            memEditContext.addressSpace = selectedSpace;
-            // Reset goto address when switching spaces
+      // Show bus selector
+      if (ImGui::BeginCombo("Bus", selectedBus ? selectedBus->name.c_str() : "None")) {
+        for (size_t i = 0; i < availableBuses.size(); i++) {
+          bool isSelected = (selectedBus == &availableBuses[i]);
+          if (ImGui::Selectable(availableBuses[i].name.c_str(), isSelected)) {
+            selectedBus = &availableBuses[i];
+            memEditContext.selectedBus = selectedBus;
+            // Reset goto address when switching buses
             memEdit.GotoAddr = 0;
           }
           if (isSelected) {
@@ -219,15 +253,11 @@ void DebuggerWindow::renderMemoryView() {
         ImGui::EndCombo();
       }
       
-      // If no address space is selected yet, select the first one
-      if (!selectedSpace && !spaces.empty()) {
-        selectedSpace = spaces[0];
-        memEditContext.addressSpace = selectedSpace;
-      }
-      
-      // Show memory editor if a space is selected
-      if (selectedSpace) {
-        memEdit.DrawContents(nullptr, selectedSpace->size, 0);
+      // Show memory editor if a bus is selected
+      if (selectedBus) {
+        // Get the max address for the bus's width
+        size_t maxSize = selectedBus->bus->getMaxAddress() + 1;
+        memEdit.DrawContents(nullptr, maxSize, 0);
       }
     }
   }

@@ -2,12 +2,24 @@
 
 #include "argparse/argparse.hpp"
 #include "multiemu/cpu.hpp"
-#include "multiemu/address_space.hpp"
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace MultiEmu {
+
+// Forward declaration
+class Bus;
+
+/**
+ * Information about a bus exposed for debugging
+ */
+struct BusInfo {
+  std::string name;        // Display name of the bus
+  Bus* bus;                // Pointer to the bus
+  std::function<size_t()> getProgramCounter; // Function to get program counter for highlighting (nullptr if not applicable)
+};
 
 /**
  * Base class for all emulated boards
@@ -37,24 +49,12 @@ public:
    * Draw graphics to the screen (no-op by default)
    */
   virtual void draw() {}
-
-private:
-  std::vector<AddressSpace *> address_spaces;
-
-public:
+  
   /**
-   * Get all address spaces exposed by this board
+   * Get information about buses available for debugging
+   * @return Vector of BusInfo structures
    */
-  const std::vector<AddressSpace *>& get_address_spaces() const {
-    return address_spaces;
-  }
-
-  /**
-   * Add a new address space to the board
-   */
-  void add_address_space(AddressSpace *space) {
-    address_spaces.push_back(space);
-  }
+  virtual std::vector<BusInfo> get_buses() const { return {}; }
 };
 
 } // namespace MultiEmu
