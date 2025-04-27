@@ -20,11 +20,11 @@ public:
   std::vector<uint8_t> ram;
   uint8_t mmu_config[0x10];
   
-  // Constructor to initialize buses with appropriate address widths
+  // Constructor to initialize buses with appropriate address space sizes
   FantacomBoard() 
-    : virt(MultiEmu::Bus::Width::BUS_16BIT),
-      phys(MultiEmu::Bus::Width::BUS_32BIT),
-      io(MultiEmu::Bus::Width::BUS_8BIT) {}
+    : virt(0xFFFF),       // 64KB virtual memory
+      phys(0xFFFFF),      // 1MB physical memory
+      io(0xFF) {}         // 256 byte I/O space
 
   virtual void setup(const argparse::ArgumentParser &args) override;
   virtual int run(int cycles) override;

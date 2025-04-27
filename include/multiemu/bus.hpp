@@ -7,17 +7,11 @@
 namespace MultiEmu {
 
 /**
- * Non-templated Bus class with fixed types but variable bit width
+ * Non-templated Bus class with unified 32-bit address space
  * This version simplifies debugger integration at a small cost to type safety
  */
 class Bus {
 public:
-  enum class Width {
-    BUS_8BIT,   // 8-bit address bus
-    BUS_16BIT,  // 16-bit address bus
-    BUS_32BIT   // 32-bit address bus
-  };
-
   struct Region {
     uint32_t start, end;
     std::function<uint8_t(uint32_t)> read;
@@ -25,8 +19,8 @@ public:
     int priority = 0;
   };
 
-  // Constructor requires address width information
-  Bus(Width addressWidth = Width::BUS_16BIT) : addressWidth(addressWidth) {}
+  // Constructor just takes the size of the addressable space
+  Bus(uint32_t maxAddress = 0xFFFF) : maxAddress(maxAddress) {}
 
   // Map a memory region to this bus
   void mapRegion(uint32_t base, int size, 
@@ -118,27 +112,14 @@ public:
     write(static_cast<uint32_t>(address), value);
   }
 
-  // Get the address width of this bus
-  Width getAddressWidth() const {
-    return addressWidth;
-  }
-
   // Get the maximum possible address for this bus
   uint32_t getMaxAddress() const {
-    switch (addressWidth) {
-      case Width::BUS_8BIT:
-        return 0xFF;
-      case Width::BUS_16BIT:
-        return 0xFFFF;
-      case Width::BUS_32BIT:
-      default:
-        return 0xFFFFFFFF;
-    }
+    return maxAddress;
   }
 
 private:
   std::vector<Region> regions;
-  Width addressWidth;
+  uint32_t maxAddress;
 };
 
 } // namespace MultiEmu
