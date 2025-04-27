@@ -27,6 +27,8 @@ void start(void) {
     (*p)();
   }
 
+  asm volatile ("ei");
+
   main(0, 0, 0);
   while (1);
 }

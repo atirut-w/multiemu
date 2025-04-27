@@ -10,6 +10,7 @@ add_subdirectory(libgcc)
 add_subdirectory(modules)
 
 add_executable(bootrom
+    src/interrupt.c
     src/main.c
 )
 target_compile_options(bootrom PRIVATE -nostdlib -Oz)

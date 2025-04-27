@@ -1,6 +1,14 @@
 #include "io.h"
+#include "output.h"
+
+typedef struct {
+  unsigned char character;
+  unsigned char attribute;
+} vga_char_t;
 
 extern unsigned char font[];
+vga_char_t *vga = (vga_char_t *)(0xf000);
+int cursor = 0;
 
 static void decompress(unsigned char *dest, const unsigned char *src, unsigned int len) {
   unsigned int src_idx = 0;
@@ -41,12 +49,22 @@ __attribute__((constructor)) void vga_init() {
   // }
   decompress((unsigned char *)(4096 * 15), font_ptr, 4096);
 
-  OUT(15, 65); // Map in VGA buffer
+  puts("Hello, world!");
+}
 
-  const char *text = "Hello, World!";
-  char *vga = (char *)(4096 * 15);
-  for (unsigned i = 0; text[i] != '\0'; i++) {
-    *vga++ = text[i];
-    *vga++ = 0x07; // Attribute byte (light gray on black)
+void puts(const char *str) {
+  int old_page = IN(15);
+  OUT(15, 65); // Map in VRAM at page 16
+
+  while (*str) {
+    vga[cursor].character = *str;
+    vga[cursor].attribute = 0x07; // White on black
+    cursor++;
+    str++;
   }
+  vga[cursor].character = '\n';
+  vga[cursor].attribute = 0x07; // White on black
+  cursor++;
+
+  OUT(15, old_page); // Restore old page
 }
