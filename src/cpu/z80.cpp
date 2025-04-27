@@ -282,4 +282,25 @@ std::map<std::string, uint64_t> Z80::getAllRegisters() {
 // Program counter access
 size_t Z80::getProgramCounter() { return pImpl->cpu.reg.PC; }
 
+// Interrupt interface implementation
+void Z80::requestInterrupt(uint32_t vector, bool nmi) {
+  if (nmi) {
+    // For Z80, NMI doesn't use vector but jumps to a fixed address (0x0066)
+    // NMI cannot be masked and is always handled regardless of interrupt enable flag
+    pImpl->cpu.generateNMI(0x0066);
+  } else {
+    // Regular maskable interrupt with vector
+    // In this Z80 implementation, the vector handling depends on interrupt mode:
+    // - IM 0: Uses the vector directly as an instruction operand (typically for RST instruction)
+    // - IM 1: Vector is ignored, CPU always executes an RST 38h instruction
+    // - IM 2: Vector is combined with I register to form an address pointer
+    pImpl->cpu.generateIRQ(vector & 0xFF); // Limit vector to 8 bits for Z80
+  }
+}
+
+bool Z80::areInterruptsEnabled() const {
+  // IFF1 (bit 0 of IFF) determines if interrupts are enabled
+  return (pImpl->cpu.reg.IFF & 0x01) != 0;
+}
+
 } // namespace MultiEmu

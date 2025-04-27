@@ -74,6 +74,12 @@ public:
   
   // Program counter access for memory view positioning
   virtual size_t getProgramCounter() = 0;
+  
+  // Interrupt interface
+  virtual void requestInterrupt(uint32_t vector = 0, bool nmi = false) { /* Default no-op */ }
+  
+  // For debugging/status purposes
+  virtual bool areInterruptsEnabled() const { return false; /* Default: interrupts disabled */ }
 };
 
 } // namespace MultiEmu

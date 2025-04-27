@@ -38,6 +38,10 @@ public:
 
   // Program counter access for memory view positioning
   virtual size_t getProgramCounter() override;
+  
+  // Interrupt interface
+  virtual void requestInterrupt(uint32_t vector = 0, bool nmi = false) override;
+  virtual bool areInterruptsEnabled() const override;
 };
 
 } // namespace MultiEmu
