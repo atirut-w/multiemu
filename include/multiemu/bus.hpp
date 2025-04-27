@@ -71,7 +71,7 @@ public:
       }
     }
     if (best) {
-      return best->read(address);
+      return best->read(address - best->start);
     }
     std::cerr << "Bus read out of range @ " << std::hex << address << std::dec << "\n";
     return 0; // Return a default value for out-of-range reads
@@ -97,7 +97,7 @@ public:
       }
     }
     if (best) {
-      best->write(address, value);
+      best->write(address - best->start, value);
     } else {
       std::cerr << "Bus write out of range @ " << std::hex << address << std::dec << "\n";
     }
