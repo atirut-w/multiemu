@@ -1,0 +1,6 @@
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR Z80)
+set(CMAKE_OBJCOPY z80-elf-objcopy)
+
+set(CMAKE_C_COMPILER z80-elf-clang)
+set(CMAKE_C_COMPILER_WORKS 1)

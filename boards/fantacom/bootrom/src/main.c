@@ -1,6 +1,4 @@
-#include <unistd.h>
-
-int main(void) {
-  write(1, "Hello, world!\n", 14);
+int main() {
+  const char str[128] = "Hello, Fantacom!";
   return 0;
 }
