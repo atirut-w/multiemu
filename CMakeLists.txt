@@ -8,4 +8,4 @@ add_executable(multiemu
     src/main.cpp
 )
 target_include_directories(multiemu PRIVATE include)
-target_link_libraries(multiemu PRIVATE raylib)
+target_link_libraries(multiemu PRIVATE raylib rlImGui imgui)
