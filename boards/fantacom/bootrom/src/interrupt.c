@@ -6,6 +6,7 @@ __attribute__((interrupt)) void bad_int() {
   // Handle invalid interrupt
   // This is a placeholder for actual interrupt handling logic
   puts("Invalid interrupt");
+  asm volatile ("ei");
 }
 
 __attribute__((constructor)) static void init_mode2() {
