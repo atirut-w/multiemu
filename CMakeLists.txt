@@ -19,6 +19,9 @@ add_library(rlImGui STATIC
 target_include_directories(rlImGui PUBLIC 3rd/rlImGui)
 target_link_libraries(rlImGui PRIVATE raylib ImGui)
 
+add_library(chips INTERFACE)
+target_include_directories(chips INTERFACE 3rd/chips)
+
 add_executable(multiemu
     src/main.cpp
     src/board_registry.cpp
@@ -33,7 +36,7 @@ add_executable(multiemu
     src/cpu/z80.cpp
 )
 target_include_directories(multiemu PRIVATE include boards cpus 3rd/z80 3rd/imgui_club)
-target_link_libraries(multiemu PRIVATE argparse raylib rlImGui ImGui)
+target_link_libraries(multiemu PRIVATE argparse raylib rlImGui ImGui chips)
 install(TARGETS multiemu DESTINATION bin)
 
 add_subdirectory(boards)
