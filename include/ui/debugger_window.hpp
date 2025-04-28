@@ -37,9 +37,13 @@ private:
   void renderControlButtons();
   void renderRegisters();
   void renderMemoryView();
+  void renderDeviceTree();
   
   // Update available buses from board
   void updateAvailableBuses();
+  
+  // Helper for rendering the device tree recursively
+  void renderDeviceNode(const Device* device);
 };
 
 }

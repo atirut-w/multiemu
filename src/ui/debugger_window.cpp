@@ -64,6 +64,7 @@ void DebuggerWindow::render() {
     renderControlButtons();
     renderRegisters();
     renderMemoryView();
+    renderDeviceTree();
   }
   ImGui::End();
 }
@@ -260,6 +261,63 @@ void DebuggerWindow::renderMemoryView() {
         memEdit.DrawContents(nullptr, maxSize, 0);
       }
     }
+  }
+}
+
+void DebuggerWindow::renderDeviceTree() {
+  if (ImGui::CollapsingHeader("Device Tree", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (board) {
+      // Start with the board as the root device
+      renderDeviceNode(board);
+    } else {
+      ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "No board available.");
+    }
+  }
+}
+
+void DebuggerWindow::renderDeviceNode(const Device* device) {
+  if (!device) return;
+
+  // Create a unique ID for this node (using pointer value)
+  ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+  
+  // Add selection outline for clarity
+  flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+  
+  // Check if this is a leaf node (no children)
+  if (device->getChildren().empty()) {
+    flags |= ImGuiTreeNodeFlags_Leaf;
+  }
+
+  // Format the node text with type and name
+  std::string nodeText = device->getDeviceType() + ": " + device->getDeviceName();
+  
+  // Open the tree node
+  bool nodeOpen = ImGui::TreeNodeEx((void*)device, flags, "%s", nodeText.c_str());
+
+  // Add hover info
+  if (ImGui::IsItemHovered()) {
+    ImGui::BeginTooltip();
+    ImGui::Text("Type: %s", device->getDeviceType().c_str());
+    ImGui::Text("Name: %s", device->getDeviceName().c_str());
+    ImGui::Text("Address: %p", device);
+    
+    // Show specific info based on device type
+    if (device->getDeviceType() == "cpu") {
+      const CPU* cpu = static_cast<const CPU*>(device);
+      ImGui::Text("PC: 0x%04X", (unsigned int)cpu->getProgramCounter());
+      ImGui::Text("Interrupts: %s", cpu->areInterruptsEnabled() ? "Enabled" : "Disabled");
+    }
+    
+    ImGui::EndTooltip();
+  }
+
+  if (nodeOpen) {
+    // Recursively render all children
+    for (const auto& child : device->getChildren()) {
+      renderDeviceNode(child.get());
+    }
+    ImGui::TreePop();
   }
 }
 
