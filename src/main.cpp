@@ -4,6 +4,7 @@
 
 bool running = true;
 bool showAbout = false;
+bool showDemo = false;
 
 void renderToolbar() {
   if (ImGui::BeginMainMenuBar()) {
@@ -15,6 +16,9 @@ void renderToolbar() {
     }
 
     if (ImGui::BeginMenu("Help")) {
+      if (ImGui::MenuItem("Show Demo Window (Test)")) {
+        showDemo = !showDemo;
+      }
       if (ImGui::MenuItem("About")) {
         showAbout = true;
       }
@@ -26,6 +30,12 @@ void renderToolbar() {
 
   if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Q)) {
     running = false;
+  }
+}
+
+void renderDemo() {
+  if (showDemo) {
+    ImGui::ShowDemoWindow(&showDemo);
   }
 }
 
@@ -54,6 +64,7 @@ int main() {
 
     rlImGuiBegin();
     renderToolbar();
+    renderDemo();
     renderAbout();
     rlImGuiEnd();
 
