@@ -1,8 +1,10 @@
 #pragma once
 #include "multiemu/units.hpp"
+#include "multiemu/device.hpp"
 #include <cstdint>
 
-struct Graphics {
+class Graphics : public MultiEmu::Device {
+public:
   uint8_t config[0];
   uint8_t vram[256 * KIB];
 
@@ -15,7 +17,16 @@ struct Graphics {
     }
 
     modeset();
-  };
+  }
+
+  // Device interface implementation
+  virtual std::string getDeviceType() const override { return "video"; }
+  virtual std::string getDeviceName() const override { return "Fantacom VDC"; }
+  virtual void initialize() override { modeset(); }
+  virtual void reset() override { 
+    mode = 0; 
+    modeset(); 
+  }
 
   void modeset();
   void draw();

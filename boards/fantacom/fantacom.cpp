@@ -19,12 +19,15 @@ using namespace MultiEmu;
 static BoardRegistry::Register<FantacomBoard> registration("fantacom", "Z80-based fantasy computer");
 
 void FantacomBoard::reset() {
-  // Reset all devices in the hierarchy
+  // Reset the CPU explicitly
   z80_ptr->reset();
+  
+  // Reset the graphics controller explicitly
+  gfx_ptr->reset();
   
   // Reset MMU
   for (int i = 0; i < 16; i++) {
-    mmu_config[i] = 0; // Default identity mapping
+    mmu_config[i] = 0; // Default zero mapping
   }
 }
 
@@ -46,8 +49,8 @@ void FantacomBoard::setup(const ArgumentParser &args) {
       [this](uint32_t address, uint8_t value) {}, 0);
 
   phys.mapRegion(
-      256 * KIB, 256 * KIB, [this](uint32_t address) -> uint8_t { return gfx.vram[address]; },
-      [this](uint32_t address, uint8_t value) { gfx.vram[address] = value; }, 0);
+      256 * KIB, 256 * KIB, [this](uint32_t address) -> uint8_t { return gfx_ptr->vram[address]; },
+      [this](uint32_t address, uint8_t value) { gfx_ptr->vram[address] = value; }, 0);
 
   phys.mapRegion(
       512 * KIB, 512 * KIB,
@@ -87,7 +90,7 @@ int FantacomBoard::execute(int cycles) {
   }
 }
 
-void FantacomBoard::draw() { gfx.draw(); }
+void FantacomBoard::draw() { gfx_ptr->draw(); }
 
 std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   std::vector<MultiEmu::BusInfo> buses;

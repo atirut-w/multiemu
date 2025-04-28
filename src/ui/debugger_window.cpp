@@ -300,7 +300,6 @@ void DebuggerWindow::renderDeviceNode(const Device* device) {
     ImGui::BeginTooltip();
     ImGui::Text("Type: %s", device->getDeviceType().c_str());
     ImGui::Text("Name: %s", device->getDeviceName().c_str());
-    ImGui::Text("Address: %p", device);
     
     // Show specific info based on device type
     if (device->getDeviceType() == "cpu") {

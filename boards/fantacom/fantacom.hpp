@@ -10,8 +10,6 @@
 
 class FantacomBoard : public MultiEmu::Board {
 public:
-  Graphics gfx;
-
   MultiEmu::Bus virt;
   MultiEmu::Bus phys;
   MultiEmu::Bus io;
@@ -20,8 +18,9 @@ public:
   std::vector<uint8_t> ram;
   uint8_t mmu_config[0x10];
   
-  // Raw pointer to Z80 CPU for access after ownership transfer
+  // Raw pointers for access after ownership transfer
   MultiEmu::Z80* z80_ptr = nullptr;
+  Graphics* gfx_ptr = nullptr;
   
   // Constructor to initialize buses with appropriate address space sizes
   FantacomBoard() 
@@ -32,6 +31,11 @@ public:
     auto cpu = std::make_unique<MultiEmu::Z80>();
     z80_ptr = cpu.get();  // Store raw pointer before ownership transfer
     addChild(std::move(cpu)); // Transfer ownership to device hierarchy
+    
+    // Create Graphics device and add it to hierarchy
+    auto gfx = std::make_unique<Graphics>();
+    gfx_ptr = gfx.get();  // Store raw pointer before ownership transfer
+    addChild(std::move(gfx)); // Transfer ownership to device hierarchy
   }
   
   // Device interface implementation
