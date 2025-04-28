@@ -20,24 +20,34 @@ public:
   std::vector<uint8_t> ram;
   uint8_t mmu_config[0x10];
   
-  // Z80 CPU instance as a direct member
-  MultiEmu::Z80 z80;
+  // Raw pointer to Z80 CPU for access after ownership transfer
+  MultiEmu::Z80* z80_ptr = nullptr;
   
   // Constructor to initialize buses with appropriate address space sizes
   FantacomBoard() 
     : virt(0xFFFF),       // 64KB virtual memory
       phys(0xFFFFF),      // 1MB physical memory
-      io(0xFF) {}         // 256 byte I/O space
+      io(0xFF) {          // 256 byte I/O space
+    // Create CPU and add it to device hierarchy
+    auto cpu = std::make_unique<MultiEmu::Z80>();
+    z80_ptr = cpu.get();  // Store raw pointer before ownership transfer
+    addChild(std::move(cpu)); // Transfer ownership to device hierarchy
+  }
+  
+  // Device interface implementation
+  virtual std::string getDeviceName() const override { return "Fantacom"; }
+  virtual void reset() override;
 
+  // Board interface
   virtual void setup(const argparse::ArgumentParser &args) override;
-  virtual int run(int cycles) override;
+  virtual int execute(int cycles) override;
   virtual void draw() override;
   
   // Expose buses for debugging
   virtual std::vector<MultiEmu::BusInfo> get_buses() const override;
   
-  // Implementation of CPU getter
-  virtual MultiEmu::CPU* getCPU() override { return &z80; }
+  // For backward compatibility (gets CPU from device tree now)
+  virtual MultiEmu::CPU* getCPU() override { return z80_ptr; }
   
   uint8_t read(uint16_t address);
   void write(uint16_t address, uint8_t value);

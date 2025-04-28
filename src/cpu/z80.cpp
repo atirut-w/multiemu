@@ -86,14 +86,14 @@ Z80::Z80() : pImpl(std::make_unique<Impl>(this)) {
   pImpl->parent = this;  // Set the parent pointer
 }
 
+std::string Z80::getDeviceName() const {
+  return "Z80";
+}
+
 // Destructor - needed for unique_ptr with incomplete type
 Z80::~Z80() = default;
 
-// Move constructor
-Z80::Z80(Z80 &&) noexcept = default;
-
-// Move assignment
-Z80 &Z80::operator=(Z80 &&) noexcept = default;
+// Move operations handled by base class
 
 // Z80-specific debugger capabilities
 DebuggerCapabilities Z80::getDebuggerCapabilities() const {

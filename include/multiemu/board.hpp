@@ -2,6 +2,7 @@
 
 #include "argparse/argparse.hpp"
 #include "multiemu/cpu.hpp"
+#include "multiemu/device.hpp"
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,14 +23,18 @@ struct BusInfo {
 };
 
 /**
- * Base class for all emulated boards
+ * Base class for all emulated boards - inherits from Device
  */
-class Board {
+class Board : public Device {
 public:
   virtual ~Board() = default;
 
   bool display = false;
   int clock_speed = 4000000;
+
+  // Device interface implementation
+  virtual std::string getDeviceType() const override { return "board"; }
+  virtual void initialize() override { /* Will be handled by setup() */ }
 
   /**
    * Set up the board with the given arguments
@@ -39,10 +44,11 @@ public:
   
   /**
    * Run the board for a set number of minimum cycles
+   * Override Device::execute(int) to handle all child devices
    * @param cycles Minimum number of cycles to run
    * @return The actual number of cycles that were run
    */
-  virtual int run(int cycles) = 0;
+  virtual int execute(int cycles) override = 0;
   
   /**
    * Draw graphics to the screen (no-op by default)
@@ -56,10 +62,15 @@ public:
   virtual std::vector<BusInfo> get_buses() const { return {}; }
   
   /**
-   * Get the CPU associated with this board
-   * @return Pointer to the CPU
+   * Backward compatibility method - find CPU device in children
+   * @return Pointer to the primary CPU
    */
-  virtual CPU* getCPU() = 0;
+  virtual CPU* getCPU();
+  
+  /**
+   * Run method is just an alias to execute to maintain backward compatibility
+   */
+  int run(int cycles) { return execute(cycles); }
 };
 
 } // namespace MultiEmu

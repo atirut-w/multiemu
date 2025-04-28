@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "multiemu/device.hpp"
 
 namespace MultiEmu {
 
@@ -34,7 +35,10 @@ struct DebuggerCapabilities {
   std::string statusRegisterName;
 };
 
-class CPU {
+/**
+ * CPU base class - inherits from Device
+ */
+class CPU : public Device {
 public:
   using ReadCallback = std::function<uint8_t(size_t)>;
   using WriteCallback = std::function<void(size_t, uint8_t)>;
@@ -46,9 +50,13 @@ public:
 
   virtual ~CPU() = default;
 
-  // Core execution
-  virtual int execute(int cycles) = 0;
-  virtual void reset() = 0;
+  // Device interface implementation
+  virtual std::string getDeviceType() const override { return "cpu"; }
+  virtual void initialize() override { reset(); }
+  
+  // Core execution (inherited from Device, needs to be re-declared here)
+  virtual int execute(int cycles) override = 0;
+  virtual void reset() override = 0;
   
   // Register/debugging metadata
   virtual DebuggerCapabilities getDebuggerCapabilities() const {

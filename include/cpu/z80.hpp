@@ -17,10 +17,11 @@ public:
   Z80(const Z80 &) = delete;
   Z80 &operator=(const Z80 &) = delete;
 
-  // Allow moving
-  Z80(Z80 &&) noexcept;
-  Z80 &operator=(Z80 &&) noexcept;
+  // Moving not needed - base class Device already handles it
 
+  // Device interface implementation
+  virtual std::string getDeviceName() const override;
+  
   // Core execution
   virtual int execute(int cycles) override;
   virtual void reset() override;

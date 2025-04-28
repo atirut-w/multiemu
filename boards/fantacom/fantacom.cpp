@@ -18,12 +18,22 @@ using namespace MultiEmu;
 
 static BoardRegistry::Register<FantacomBoard> registration("fantacom", "Z80-based fantasy computer");
 
+void FantacomBoard::reset() {
+  // Reset all devices in the hierarchy
+  z80_ptr->reset();
+  
+  // Reset MMU
+  for (int i = 0; i < 16; i++) {
+    mmu_config[i] = 0; // Default identity mapping
+  }
+}
+
 void FantacomBoard::setup(const ArgumentParser &args) {
   // Set up memory access callbacks
-  z80.read = [this](uint16_t address) { return read(address); };
-  z80.write = [this](uint16_t address, uint8_t value) { write(address, value); };
-  z80.in = [this](uint16_t address) { return in(address); };
-  z80.out = [this](uint16_t address, uint8_t value) { out(address, value); };
+  z80_ptr->read = [this](uint16_t address) { return read(address); };
+  z80_ptr->write = [this](uint16_t address, uint8_t value) { write(address, value); };
+  z80_ptr->in = [this](uint16_t address) { return in(address); };
+  z80_ptr->out = [this](uint16_t address, uint8_t value) { out(address, value); };
   clock_speed = 2500000; // 2.5 MHz
   display = true;
 
@@ -62,11 +72,15 @@ void FantacomBoard::setup(const ArgumentParser &args) {
   io.mapRegion8(
       0, 16, [this](uint8_t address) -> uint8_t { return mmu_config[address]; },
       [this](uint8_t address, uint8_t value) { mmu_config[address] = value; }, 0);
+      
+  // Reset the entire device tree
+  reset();
 }
 
-int FantacomBoard::run(int cycles) {
+int FantacomBoard::execute(int cycles) {
   try {
-    return z80.execute(cycles);
+    // Pass execution to the Z80 CPU
+    return z80_ptr->execute(cycles);
   } catch (const runtime_error &e) {
     cerr << "Error in CPU: " << e.what() << endl;
     return -1;
@@ -82,7 +96,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   MultiEmu::BusInfo virtBus;
   virtBus.name = "Memory (Virtual/CPU)";
   virtBus.bus = const_cast<MultiEmu::Bus *>(&virt);
-  virtBus.getProgramCounter = [this]() { return static_cast<size_t>(z80.getProgramCounter()); };
+  virtBus.getProgramCounter = [this]() { return static_cast<size_t>(z80_ptr->getProgramCounter()); };
   buses.push_back(virtBus);
 
   // Add physical memory bus (after MMU translation)
@@ -90,7 +104,7 @@ std::vector<MultiEmu::BusInfo> FantacomBoard::get_buses() const {
   physBus.name = "Memory (Physical)";
   physBus.bus = const_cast<MultiEmu::Bus *>(&phys);
   physBus.getProgramCounter = [this]() {
-    auto pc = z80.getProgramCounter();
+    auto pc = z80_ptr->getProgramCounter();
     auto &pagemap = mmu_config;
     int v_page = pc >> 12;
     int p_page = pagemap[v_page];
