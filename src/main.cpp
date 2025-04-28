@@ -1,25 +1,65 @@
+#include <imgui.h>
 #include <raylib.h>
 #include <rlImGui.h>
-#include <imgui.h>
 
-int main()
-{
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(1280, 720, "MultiEmu");
-    SetTargetFPS(60);
-    rlImGuiSetup(true);
+bool running = true;
+bool showAbout = false;
 
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        ClearBackground(GRAY);
-
-        rlImGuiBegin();
-        rlImGuiEnd();
-
-        EndDrawing();
+void renderToolbar() {
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("File")) {
+      if (ImGui::MenuItem("Quit", "Ctrl+Q")) {
+        running = false;
+      }
+      ImGui::EndMenu();
     }
 
-    rlImGuiShutdown();
-    CloseWindow(); // Close window and OpenGL context
+    if (ImGui::BeginMenu("Help")) {
+      if (ImGui::MenuItem("About")) {
+        showAbout = true;
+      }
+      ImGui::EndMenu();
+    }
+
+    ImGui::EndMainMenuBar();
+  }
+
+  if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Q)) {
+    running = false;
+  }
+}
+
+void renderAbout() {
+  if (showAbout) {
+    if (ImGui::Begin("About", &showAbout, ImGuiWindowFlags_AlwaysAutoResize)) {
+      ImGui::Text("MultiEmu Rewrite");
+      ImGui::Text("A multi-system emulator framework");
+      if (ImGui::Button("GitHub")) {
+        OpenURL("https://github.com/atirut-w/multiemu");
+      }
+    }
+    ImGui::End();
+  }
+}
+
+int main() {
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(1280, 720, "MultiEmu");
+  SetTargetFPS(60);
+  rlImGuiSetup(true);
+
+  while (!WindowShouldClose() && running) {
+    BeginDrawing();
+    ClearBackground(GRAY);
+
+    rlImGuiBegin();
+    renderToolbar();
+    renderAbout();
+    rlImGuiEnd();
+
+    EndDrawing();
+  }
+
+  rlImGuiShutdown();
+  CloseWindow(); // Close window and OpenGL context
 }
