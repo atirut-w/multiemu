@@ -5,6 +5,7 @@ project(MultiEmu)
 add_subdirectory(3rd)
 
 add_executable(multiemu
+    src/device.cpp
     src/main.cpp
 )
 target_include_directories(multiemu PRIVATE include)
