@@ -1,16 +1,17 @@
 #pragma once
+#include "multiemu/device.hpp"
 #include <functional>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <cstdint>
 
 namespace MultiEmu {
 
 /**
- * Non-templated Bus class with unified 32-bit address space
- * This version simplifies debugger integration at a small cost to type safety
+ * Bus class with unified 32-bit address space
  */
-class Bus {
+class Bus : public Device {
 public:
   struct Region {
     uint32_t start, end;
@@ -18,6 +19,11 @@ public:
     std::function<void(uint32_t, uint8_t)> write;
     int priority = 0;
   };
+
+  virtual void initialize() override {}
+  virtual void reset() override {}
+  virtual std::string getDeviceType() const override { return "bus"; }
+  virtual std::string getDeviceName() const override { return "Bus"; }
 
   // Constructor just takes the size of the addressable space
   Bus(uint32_t maxAddress = 0xFFFF) : maxAddress(maxAddress) {}
