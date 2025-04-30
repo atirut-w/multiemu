@@ -4,3 +4,4 @@ build/
 compile_commands.json
 imgui.ini
 CLAUDE.md
+.mcp.json
