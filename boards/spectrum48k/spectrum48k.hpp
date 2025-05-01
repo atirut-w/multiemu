@@ -1,0 +1,44 @@
+#pragma once
+#include "multiemu/board.hpp"
+#include "multiemu/bus.hpp"
+#include "multiemu/cpu.hpp"
+#include "cpu/z80.hpp"
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <vector>
+
+namespace MultiEmu {
+
+class Spectrum48K : public Board {
+public:
+  Spectrum48K();
+  ~Spectrum48K() override = default;
+
+  // Implement Board interface
+  void setup(const argparse::ArgumentParser &args) override;
+  int run(int cycles) override;
+  void draw() override;
+  std::vector<BusInfo> get_buses() const override;
+  CPU* getCPU() override { return &z80; }
+
+private:
+  // Hardware components
+  Z80 z80;
+  Bus memory_bus;
+  Bus io_bus;
+  
+  // Memory
+  std::vector<uint8_t> rom;     // 16KB ROM
+  std::array<uint8_t, 48*1024> ram;  // 48KB RAM
+  
+  // Memory access
+  uint8_t read_memory(uint16_t address);
+  void write_memory(uint16_t address, uint8_t value);
+  
+  // I/O port access
+  uint8_t read_port(uint16_t port);
+  void write_port(uint16_t port, uint8_t value);
+};
+
+} // namespace MultiEmu
