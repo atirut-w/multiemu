@@ -255,8 +255,8 @@ void Spectrum48K::draw() {
       uint8_t attrByte = memory_bus.read16(attr_addr);
       uint8_t ink = (attrByte & 0x07);
       uint8_t paper = (attrByte >> 3) & 0x07;
-      uint8_t flash = (attrByte >> 6) & 0x01;
-      uint8_t bright = (attrByte >> 7) & 0x01;
+      uint8_t bright = (attrByte >> 6) & 0x01;
+      uint8_t flash = (attrByte >> 7) & 0x01;
       Color inkColor = palette[ink + (bright ? 8 : 0)];
       Color paperColor = palette[paper + (bright ? 8 : 0)];
       for (int bit = 0; bit < 8; ++bit) {
