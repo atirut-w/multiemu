@@ -32,6 +32,10 @@ private:
   std::vector<uint8_t> rom;     // 16KB ROM
   std::array<uint8_t, 48*1024> ram;  // 48KB RAM
   
+  // Keyboard state - 8 half-rows with 5 keys each
+  // False = key pressed, True = key released
+  std::array<std::array<bool, 5>, 8> keyboard;
+  
   // Memory access
   uint8_t read_memory(uint16_t address);
   void write_memory(uint16_t address, uint8_t value);
@@ -39,6 +43,9 @@ private:
   // I/O port access
   uint8_t read_port(uint16_t port);
   void write_port(uint16_t port, uint8_t value);
+  
+  // Handle keyboard input
+  void handle_keypress(int row, int col, bool pressed);
 };
 
 } // namespace MultiEmu

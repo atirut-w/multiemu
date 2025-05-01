@@ -73,13 +73,93 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
 
   // Initialize RAM to 0
   std::fill(ram.begin(), ram.end(), 0);
+  
+  // Initialize all keyboard keys as released (true = released)
+  for (auto& row : keyboard) {
+    row.fill(true);
+  }
 
   // Reset the CPU
   z80.reset();
   Display::init(256, 192); // Initialize display with ZX Spectrum resolution
 }
 
+void Spectrum48K::handle_keypress(int row, int col, bool released) {
+  if (row >= 0 && row < 8 && col >= 0 && col < 5) {
+    keyboard[row][col] = released;
+  }
+}
+
 int Spectrum48K::run(int cycles) {
+  // Process keyboard input
+  // ZX Spectrum 48K Keyboard Matrix:
+  // 0: CAPS SHIFT, Z, X, C, V
+  // 1: A, S, D, F, G
+  // 2: Q, W, E, R, T
+  // 3: 1, 2, 3, 4, 5
+  // 4: 0, 9, 8, 7, 6
+  // 5: P, O, I, U, Y
+  // 6: ENTER, L, K, J, H
+  // 7: SPACE, SYMBOL SHIFT, M, N, B
+  
+  // Map PC keyboard to ZX Spectrum keyboard matrix
+  // Row 0
+  handle_keypress(0, 0, !IsKeyDown(KEY_LEFT_SHIFT));  // CAPS SHIFT
+  handle_keypress(0, 1, !IsKeyDown(KEY_Z));          // Z
+  handle_keypress(0, 2, !IsKeyDown(KEY_X));          // X
+  handle_keypress(0, 3, !IsKeyDown(KEY_C));          // C
+  handle_keypress(0, 4, !IsKeyDown(KEY_V));          // V
+  
+  // Row 1
+  handle_keypress(1, 0, !IsKeyDown(KEY_A));          // A
+  handle_keypress(1, 1, !IsKeyDown(KEY_S));          // S
+  handle_keypress(1, 2, !IsKeyDown(KEY_D));          // D
+  handle_keypress(1, 3, !IsKeyDown(KEY_F));          // F
+  handle_keypress(1, 4, !IsKeyDown(KEY_G));          // G
+  
+  // Row 2
+  handle_keypress(2, 0, !IsKeyDown(KEY_Q));          // Q
+  handle_keypress(2, 1, !IsKeyDown(KEY_W));          // W
+  handle_keypress(2, 2, !IsKeyDown(KEY_E));          // E
+  handle_keypress(2, 3, !IsKeyDown(KEY_R));          // R
+  handle_keypress(2, 4, !IsKeyDown(KEY_T));          // T
+  
+  // Row 3
+  handle_keypress(3, 0, !IsKeyDown(KEY_ONE));        // 1
+  handle_keypress(3, 1, !IsKeyDown(KEY_TWO));        // 2
+  handle_keypress(3, 2, !IsKeyDown(KEY_THREE));      // 3
+  handle_keypress(3, 3, !IsKeyDown(KEY_FOUR));       // 4
+  handle_keypress(3, 4, !IsKeyDown(KEY_FIVE));       // 5
+  
+  // Row 4
+  handle_keypress(4, 0, !IsKeyDown(KEY_ZERO));       // 0
+  handle_keypress(4, 1, !IsKeyDown(KEY_NINE));       // 9
+  handle_keypress(4, 2, !IsKeyDown(KEY_EIGHT));      // 8
+  handle_keypress(4, 3, !IsKeyDown(KEY_SEVEN));      // 7
+  handle_keypress(4, 4, !IsKeyDown(KEY_SIX));        // 6
+  
+  // Row 5
+  handle_keypress(5, 0, !IsKeyDown(KEY_P));          // P
+  handle_keypress(5, 1, !IsKeyDown(KEY_O));          // O
+  handle_keypress(5, 2, !IsKeyDown(KEY_I));          // I
+  handle_keypress(5, 3, !IsKeyDown(KEY_U));          // U
+  handle_keypress(5, 4, !IsKeyDown(KEY_Y));          // Y
+  
+  // Row 6
+  handle_keypress(6, 0, !IsKeyDown(KEY_ENTER));      // ENTER
+  handle_keypress(6, 1, !IsKeyDown(KEY_L));          // L
+  handle_keypress(6, 2, !IsKeyDown(KEY_K));          // K
+  handle_keypress(6, 3, !IsKeyDown(KEY_J));          // J
+  handle_keypress(6, 4, !IsKeyDown(KEY_H));          // H
+  
+  // Row 7
+  handle_keypress(7, 0, !IsKeyDown(KEY_SPACE));      // SPACE
+  handle_keypress(7, 1, !IsKeyDown(KEY_RIGHT_SHIFT)); // SYMBOL SHIFT
+  handle_keypress(7, 2, !IsKeyDown(KEY_M));          // M
+  handle_keypress(7, 3, !IsKeyDown(KEY_N));          // N
+  handle_keypress(7, 4, !IsKeyDown(KEY_B));          // B
+  
+  // Execute CPU cycles
   try {
     return z80.execute(cycles);
   } catch (const std::exception &e) {
@@ -93,14 +173,44 @@ uint8_t Spectrum48K::read_memory(uint16_t address) { return memory_bus.read16(ad
 void Spectrum48K::write_memory(uint16_t address, uint8_t value) { memory_bus.write16(address, value); }
 
 uint8_t Spectrum48K::read_port(uint16_t port) {
-  // Stub implementation
-  // TODO: Implement ULA ports, keyboard, etc.
+  // ULA port (keyboard, ear, etc.)
+  if ((port & 0x00FF) == 0xFE) {
+    uint8_t result = 0xFF; // Initialize all bits to 1
+    
+    // Bits 5 and 7 are always set
+    result = (1 << 5) | (1 << 7);
+    
+    // Get the keyboard half-row (column) mask from the high byte of the port address
+    // A half-row is selected when its bit in the address is LOW (0)
+    uint8_t column_mask = (~(port >> 8)) & 0xFF;
+    
+    // Check each half-row
+    for (int row = 0; row < 8; row++) {
+      // If this half-row is selected
+      if (column_mask & (1 << row)) {
+        // Check each key in the half-row
+        for (int col = 0; col < 5; col++) {
+          // If key is pressed (false), clear the corresponding bit
+          if (!keyboard[row][col]) {
+            result &= ~(1 << col);
+          }
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  // Default for unhandled ports
   return 0xFF;
 }
 
 void Spectrum48K::write_port(uint16_t port, uint8_t value) {
-  // Stub implementation
-  // TODO: Implement ULA ports (border color, etc.)
+  // ULA port (border color, etc.)
+  if ((port & 0x00FF) == 0xFE) {
+    // Border color is in bits 0-2
+    // TODO: Implement border color setting
+  }
 }
 
 void Spectrum48K::draw() {
