@@ -14,7 +14,7 @@ struct Z80::Impl {
     cpu.setupCallback([parent](void *, uint16_t address) { return parent->read(address); },
                       [parent](void *, uint16_t address, uint8_t value) { parent->write(address, value); },
                       [parent](void *, uint16_t address) { return parent->in(address); },
-                      [parent](void *, uint16_t address, uint8_t value) { parent->out(address, value); });
+                      [parent](void *, uint16_t address, uint8_t value) { parent->out(address, value); }, true);
   }
 };
 
