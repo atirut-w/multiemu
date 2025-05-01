@@ -1,90 +1,25 @@
 #include "cpu/z80.hpp"
 #include <iostream>
 #include <stdexcept>
-
-// Include the Chips library Z80 header
-#define CHIPS_IMPL
-#include "chips/z80.h"
+#include <z80.hpp>
 
 namespace MultiEmu {
 
 // Define the implementation struct
 struct Z80::Impl {
-  z80_t cpu;
-  uint64_t pins;
+  ::Z80 cpu;
 
   Impl(Z80 *parent) {
-    // Initialize the Z80 CPU
-    pins = z80_init(&cpu);
-    
-    // Setup memory callbacks indirectly by passing pins to tick function
+    // Set up callbacks, capturing the parent Z80 class pointer
+    cpu.setupCallback([parent](void *, uint16_t address) { return parent->read(address); },
+                      [parent](void *, uint16_t address, uint8_t value) { parent->write(address, value); },
+                      [parent](void *, uint16_t address) { return parent->in(address); },
+                      [parent](void *, uint16_t address, uint8_t value) { parent->out(address, value); }, true);
   }
-  
-  // Helper function to handle memory and IO access
-  uint64_t tick(uint64_t pins) {
-    // Check if memory read/write is requested
-    if (pins & Z80_MREQ) {
-      uint16_t addr = Z80_GET_ADDR(pins);
-      if (pins & Z80_RD) {
-        // Memory read
-        uint8_t data = memoryRead(addr);
-        Z80_SET_DATA(pins, data);
-      } else if (pins & Z80_WR) {
-        // Memory write
-        uint8_t data = Z80_GET_DATA(pins);
-        memoryWrite(addr, data);
-      }
-    } else if (pins & Z80_IORQ) {
-      // Handle IO operations
-      uint16_t port = Z80_GET_ADDR(pins);
-      if (pins & Z80_RD) {
-        // IO read
-        uint8_t data = ioRead(port);
-        Z80_SET_DATA(pins, data);
-      } else if (pins & Z80_WR) {
-        // IO write
-        uint8_t data = Z80_GET_DATA(pins);
-        ioWrite(port, data);
-      }
-    }
-    return pins;
-  }
-  
-  // Memory access functions using the parent's callbacks
-  uint8_t memoryRead(uint16_t addr) {
-    if (parent && parent->read) {
-      return parent->read(addr);
-    }
-    return 0xFF;
-  }
-  
-  void memoryWrite(uint16_t addr, uint8_t value) {
-    if (parent && parent->write) {
-      parent->write(addr, value);
-    }
-  }
-  
-  // IO access functions using the parent's callbacks
-  uint8_t ioRead(uint16_t port) {
-    if (parent && parent->in) {
-      return parent->in(port);
-    }
-    return 0xFF;
-  }
-  
-  void ioWrite(uint16_t port, uint8_t value) {
-    if (parent && parent->out) {
-      parent->out(port, value);
-    }
-  }
-  
-  Z80* parent = nullptr;
 };
 
 // Constructor - initialize implementation
-Z80::Z80() : pImpl(std::make_unique<Impl>(this)) {
-  pImpl->parent = this;  // Set the parent pointer
-}
+Z80::Z80() : pImpl(std::make_unique<Impl>(this)) {}
 
 // Destructor - needed for unique_ptr with incomplete type
 Z80::~Z80() = default;
@@ -154,159 +89,218 @@ std::vector<FlagDefinition> Z80::getFlagDefinitions() const {
 
 // Core execution methods
 int Z80::execute(int cycles) {
-  int executed = 0;
-  
-  // Run for the requested number of cycles
-  while (executed < cycles) {
-    // Tick the CPU
-    pImpl->pins = z80_tick(&pImpl->cpu, pImpl->pins);
-    
-    // Process memory and IO requests
-    pImpl->pins = pImpl->tick(pImpl->pins);
-    
-    executed++;
-  }
-  
-  return executed;
+  // Execute for requested cycles
+  return pImpl->cpu.execute(cycles);
 }
 
 void Z80::reset() {
-  // Reset the CPU
-  pImpl->pins = z80_reset(&pImpl->cpu);
+  // The Z80 library doesn't have a reset method, so we'll implement it manually
+  // NOTE: We don't reset every registers, just the bare minimum.
+  pImpl->cpu.reg.IFF = 0;       // Reset interrupt flip-flop
+  pImpl->cpu.reg.interrupt = 0; // Reset interrupt mode
+  pImpl->cpu.reg.PC = 0;        // Reset program counter
+  pImpl->cpu.reg.I = 0;         // Reset interrupt vector
+  pImpl->cpu.reg.R = 0;         // Reset memory refresh
 }
 
-// Register access
-uint64_t Z80::getRegister(const std::string &name) {
-  const z80_t& cpu = pImpl->cpu;
-  
-  if (name == "A") return cpu.a;
-  if (name == "F") return cpu.f;
-  if (name == "B") return cpu.b;
-  if (name == "C") return cpu.c;
-  if (name == "D") return cpu.d;
-  if (name == "E") return cpu.e;
-  if (name == "H") return cpu.h;
-  if (name == "L") return cpu.l;
-  if (name == "AF") return cpu.af;
-  if (name == "BC") return cpu.bc;
-  if (name == "DE") return cpu.de;
-  if (name == "HL") return cpu.hl;
-  if (name == "IX") return cpu.ix;
-  if (name == "IY") return cpu.iy;
-  if (name == "SP") return cpu.sp;
-  if (name == "PC") return cpu.pc;
-  if (name == "I") return cpu.i;
-  if (name == "R") return cpu.r;
-  if (name == "IFF") return (cpu.iff1 ? 1 : 0) | (cpu.iff2 ? 2 : 0);
-  if (name == "IM") return cpu.im;
-  
+// Register access helpers
+namespace {
+// Helper to map register names to Z80 register values
+uint64_t getZ80Register(const ::Z80 &cpu, const std::string &name) {
+  if (name == "A")
+    return cpu.reg.pair.A;
+  if (name == "F")
+    return cpu.reg.pair.F;
+  if (name == "B")
+    return cpu.reg.pair.B;
+  if (name == "C")
+    return cpu.reg.pair.C;
+  if (name == "D")
+    return cpu.reg.pair.D;
+  if (name == "E")
+    return cpu.reg.pair.E;
+  if (name == "H")
+    return cpu.reg.pair.H;
+  if (name == "L")
+    return cpu.reg.pair.L;
+  if (name == "AF")
+    return (cpu.reg.pair.A << 8) | cpu.reg.pair.F;
+  if (name == "BC")
+    return (cpu.reg.pair.B << 8) | cpu.reg.pair.C;
+  if (name == "DE")
+    return (cpu.reg.pair.D << 8) | cpu.reg.pair.E;
+  if (name == "HL")
+    return (cpu.reg.pair.H << 8) | cpu.reg.pair.L;
+  if (name == "IX")
+    return cpu.reg.IX;
+  if (name == "IY")
+    return cpu.reg.IY;
+  if (name == "SP")
+    return cpu.reg.SP;
+  if (name == "PC")
+    return cpu.reg.PC;
+  if (name == "I")
+    return cpu.reg.I;
+  if (name == "R")
+    return cpu.reg.R;
+  if (name == "IFF")
+    return cpu.reg.IFF;
+  // Extract interrupt mode from the interrupt register (bits 0-1)
+  if (name == "IM")
+    return cpu.reg.interrupt & 0x03;
   return 0;
 }
 
-bool Z80::setRegister(const std::string &name, uint64_t value) {
-  z80_t& cpu = pImpl->cpu;
-  
-  if (name == "A") { cpu.a = value & 0xFF; return true; }
-  if (name == "F") { cpu.f = value & 0xFF; return true; }
-  if (name == "B") { cpu.b = value & 0xFF; return true; }
-  if (name == "C") { cpu.c = value & 0xFF; return true; }
-  if (name == "D") { cpu.d = value & 0xFF; return true; }
-  if (name == "E") { cpu.e = value & 0xFF; return true; }
-  if (name == "H") { cpu.h = value & 0xFF; return true; }
-  if (name == "L") { cpu.l = value & 0xFF; return true; }
-  if (name == "AF") { 
-    cpu.a = (value >> 8) & 0xFF;
-    cpu.f = value & 0xFF;
+bool setZ80Register(::Z80 &cpu, const std::string &name, uint64_t value) {
+  if (name == "A") {
+    cpu.reg.pair.A = value & 0xFF;
+    return true;
+  }
+  if (name == "F") {
+    cpu.reg.pair.F = value & 0xFF;
+    return true;
+  }
+  if (name == "B") {
+    cpu.reg.pair.B = value & 0xFF;
+    return true;
+  }
+  if (name == "C") {
+    cpu.reg.pair.C = value & 0xFF;
+    return true;
+  }
+  if (name == "D") {
+    cpu.reg.pair.D = value & 0xFF;
+    return true;
+  }
+  if (name == "E") {
+    cpu.reg.pair.E = value & 0xFF;
+    return true;
+  }
+  if (name == "H") {
+    cpu.reg.pair.H = value & 0xFF;
+    return true;
+  }
+  if (name == "L") {
+    cpu.reg.pair.L = value & 0xFF;
+    return true;
+  }
+  if (name == "AF") {
+    cpu.reg.pair.A = (value >> 8) & 0xFF;
+    cpu.reg.pair.F = value & 0xFF;
     return true;
   }
   if (name == "BC") {
-    cpu.b = (value >> 8) & 0xFF;
-    cpu.c = value & 0xFF;
+    cpu.reg.pair.B = (value >> 8) & 0xFF;
+    cpu.reg.pair.C = value & 0xFF;
     return true;
   }
   if (name == "DE") {
-    cpu.d = (value >> 8) & 0xFF;
-    cpu.e = value & 0xFF;
+    cpu.reg.pair.D = (value >> 8) & 0xFF;
+    cpu.reg.pair.E = value & 0xFF;
     return true;
   }
   if (name == "HL") {
-    cpu.h = (value >> 8) & 0xFF;
-    cpu.l = value & 0xFF;
+    cpu.reg.pair.H = (value >> 8) & 0xFF;
+    cpu.reg.pair.L = value & 0xFF;
     return true;
   }
-  if (name == "IX") { cpu.ix = value & 0xFFFF; return true; }
-  if (name == "IY") { cpu.iy = value & 0xFFFF; return true; }
-  if (name == "SP") { cpu.sp = value & 0xFFFF; return true; }
-  if (name == "PC") { 
-    // Use prefetch to set PC properly
-    pImpl->pins = z80_prefetch(&pImpl->cpu, value & 0xFFFF);
+  if (name == "IX") {
+    cpu.reg.IX = value & 0xFFFF;
     return true;
   }
-  if (name == "I") { cpu.i = value & 0xFF; return true; }
-  if (name == "R") { cpu.r = value & 0xFF; return true; }
+  if (name == "IY") {
+    cpu.reg.IY = value & 0xFFFF;
+    return true;
+  }
+  if (name == "SP") {
+    cpu.reg.SP = value & 0xFFFF;
+    return true;
+  }
+  if (name == "PC") {
+    cpu.reg.PC = value & 0xFFFF;
+    return true;
+  }
+  if (name == "I") {
+    cpu.reg.I = value & 0xFF;
+    return true;
+  }
+  if (name == "R") {
+    cpu.reg.R = value & 0xFF;
+    return true;
+  }
   if (name == "IFF") {
-    cpu.iff1 = (value & 1) != 0;
-    cpu.iff2 = (value & 2) != 0;
+    cpu.reg.IFF = value & 0xFF;
     return true;
   }
-  if (name == "IM") { cpu.im = value & 0x03; return true; }
-  
+  if (name == "IM") {
+    // Only modify the interrupt mode bits (0-1)
+    cpu.reg.interrupt = (cpu.reg.interrupt & 0xFC) | (value & 0x03);
+    return true;
+  }
   return false;
 }
+} // namespace
+
+// Register access
+uint64_t Z80::getRegister(const std::string &name) { return getZ80Register(pImpl->cpu, name); }
+
+bool Z80::setRegister(const std::string &name, uint64_t value) { return setZ80Register(pImpl->cpu, name, value); }
 
 std::map<std::string, uint64_t> Z80::getAllRegisters() {
   std::map<std::string, uint64_t> registers;
-  const z80_t& cpu = pImpl->cpu;
-  
+  const auto &cpu = pImpl->cpu;
+
   // 8-bit registers
-  registers["A"] = cpu.a;
-  registers["F"] = cpu.f;
-  registers["B"] = cpu.b;
-  registers["C"] = cpu.c;
-  registers["D"] = cpu.d;
-  registers["E"] = cpu.e;
-  registers["H"] = cpu.h;
-  registers["L"] = cpu.l;
-  registers["I"] = cpu.i;
-  registers["R"] = cpu.r;
-  
+  registers["A"] = cpu.reg.pair.A;
+  registers["F"] = cpu.reg.pair.F;
+  registers["B"] = cpu.reg.pair.B;
+  registers["C"] = cpu.reg.pair.C;
+  registers["D"] = cpu.reg.pair.D;
+  registers["E"] = cpu.reg.pair.E;
+  registers["H"] = cpu.reg.pair.H;
+  registers["L"] = cpu.reg.pair.L;
+  registers["I"] = cpu.reg.I;
+  registers["R"] = cpu.reg.R;
+
   // 16-bit registers
-  registers["AF"] = cpu.af;
-  registers["BC"] = cpu.bc;
-  registers["DE"] = cpu.de;
-  registers["HL"] = cpu.hl;
-  registers["IX"] = cpu.ix;
-  registers["IY"] = cpu.iy;
-  registers["SP"] = cpu.sp;
-  registers["PC"] = cpu.pc;
-  
+  registers["AF"] = (cpu.reg.pair.A << 8) | cpu.reg.pair.F;
+  registers["BC"] = (cpu.reg.pair.B << 8) | cpu.reg.pair.C;
+  registers["DE"] = (cpu.reg.pair.D << 8) | cpu.reg.pair.E;
+  registers["HL"] = (cpu.reg.pair.H << 8) | cpu.reg.pair.L;
+  registers["IX"] = cpu.reg.IX;
+  registers["IY"] = cpu.reg.IY;
+  registers["SP"] = cpu.reg.SP;
+  registers["PC"] = cpu.reg.PC;
+
   // CPU state
-  registers["IM"] = cpu.im;
-  registers["IFF"] = (cpu.iff1 ? 1 : 0) | (cpu.iff2 ? 2 : 0);
-  
+  registers["IM"] = cpu.reg.interrupt & 0x03;
+  registers["IFF"] = cpu.reg.IFF;
+
   return registers;
 }
 
 // Program counter access
-size_t Z80::getProgramCounter() const {
-  return pImpl->cpu.pc;
-}
+size_t Z80::getProgramCounter() const { return pImpl->cpu.reg.PC; }
 
 // Interrupt interface implementation
 void Z80::requestInterrupt(uint32_t vector, bool nmi) {
   if (nmi) {
-    // Set the NMI pin
-    pImpl->pins |= Z80_NMI;
+    // For Z80, NMI doesn't use vector but jumps to a fixed address (0x0066)
+    // NMI cannot be masked and is always handled regardless of interrupt enable flag
+    pImpl->cpu.generateNMI(0x0066);
   } else {
-    // Set the INT pin and prepare vector
-    pImpl->pins |= Z80_INT;
-    // The vector will be placed on the data bus during interrupt acknowledge
+    // Regular maskable interrupt with vector
+    // In this Z80 implementation, the vector handling depends on interrupt mode:
+    // - IM 0: Uses the vector directly as an instruction operand (typically for RST instruction)
+    // - IM 1: Vector is ignored, CPU always executes an RST 38h instruction
+    // - IM 2: Vector is combined with I register to form an address pointer
+    pImpl->cpu.generateIRQ(vector & 0xFF); // Limit vector to 8 bits for Z80
   }
 }
 
 bool Z80::areInterruptsEnabled() const {
-  // IFF1 determines if interrupts are enabled
-  return pImpl->cpu.iff1;
+  // IFF1 (bit 0 of IFF) determines if interrupts are enabled
+  return (pImpl->cpu.reg.IFF & 0x01) != 0;
 }
 
 } // namespace MultiEmu
