@@ -191,28 +191,40 @@ uint8_t Spectrum48K::read_memory(uint16_t address) { return memory_bus.read16(ad
 void Spectrum48K::write_memory(uint16_t address, uint8_t value) { memory_bus.write16(address, value); }
 
 uint8_t Spectrum48K::read_port(uint16_t port) {
-  // ULA port (keyboard, ear, etc.)
+  // Keyboard ports - The ZX Spectrum uses these ports for keyboard rows:
+  // 0xFEFE (11111110 11111110) - Row 0: CAPS SHIFT, Z, X, C, V
+  // 0xFDFE (11111101 11111110) - Row 1: A, S, D, F, G
+  // 0xFBFE (11111011 11111110) - Row 2: Q, W, E, R, T
+  // 0xF7FE (11110111 11111110) - Row 3: 1, 2, 3, 4, 5
+  // 0xEFFE (11101111 11111110) - Row 4: 0, 9, 8, 7, 6
+  // 0xDFFE (11011111 11111110) - Row 5: P, O, I, U, Y
+  // 0xBFFE (10111111 11111110) - Row 6: ENTER, L, K, J, H
+  // 0x7FFE (01111111 11111110) - Row 7: SPACE, SYMBOL SHIFT, M, N, B
+  
+  // Check if the low byte is 0xFE (all keyboard ports end with FE)
   if ((port & 0x00FF) == 0xFE) {
     uint8_t result = 0xFF; // Initialize all bits to 1
     
-    // Bits 5 and 7 are always set
-    result = (1 << 5) | (1 << 7);
+    // In the ZX Spectrum, bits 5-7 of the result should be 1
+    // However, we're only using bits 0-4 for the keys, so no need to explicitly set them
     
-    // Get the keyboard half-row (column) mask from the high byte of the port address
-    // A half-row is selected when its bit in the address is LOW (0)
-    uint8_t column_mask = (~(port >> 8)) & 0xFF;
+    // The high byte of the port address selects the keyboard half-row
+    // A half-row is selected when its bit in the high byte is LOW (0)
+    uint8_t high_byte = (port >> 8) & 0xFF;
     
-    // Check each half-row
+    // Check each row
     for (int row = 0; row < 8; row++) {
-      // If this half-row is selected
-      if (column_mask & (1 << row)) {
-        // Check each key in the half-row
+      // If this row is selected (bit is 0 in the high byte)
+      if (!(high_byte & (1 << row))) {
+        // Check each key in the row
         for (int col = 0; col < 5; col++) {
           // If key is pressed (false), clear the corresponding bit
           if (!keyboard[row][col]) {
             result &= ~(1 << col);
           }
         }
+        // We found the selected row, no need to check others
+        break;
       }
     }
     
