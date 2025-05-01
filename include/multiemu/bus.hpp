@@ -23,15 +23,15 @@ public:
   Bus(uint32_t maxAddress = 0xFFFF) : maxAddress(maxAddress) {}
 
   // Map a memory region to this bus
-  void mapRegion(uint32_t base, int size, 
+  void mapRegion(uint32_t start, uint32_t end, 
                 std::function<uint8_t(uint32_t)> read, 
                 std::function<void(uint32_t, uint8_t)> write, 
                 int priority = 0) {
-    regions.push_back({base, base + size - 1, read, write, priority});
+    regions.push_back({start, end, read, write, priority});
   }
 
   // Convenience overloads for 8-bit address
-  void mapRegion8(uint8_t base, int size, 
+  void mapRegion8(uint8_t start, uint8_t end, 
                  std::function<uint8_t(uint8_t)> read, 
                  std::function<void(uint8_t, uint8_t)> write, 
                  int priority = 0) {
@@ -42,11 +42,11 @@ public:
     auto write32 = [write](uint32_t addr, uint8_t val) { 
       write(static_cast<uint8_t>(addr), val); 
     };
-    mapRegion(base, size, read32, write32, priority);
+    mapRegion(start, end, read32, write32, priority);
   }
 
   // Convenience overloads for 16-bit address
-  void mapRegion16(uint16_t base, int size, 
+  void mapRegion16(uint16_t start, uint16_t end, 
                   std::function<uint8_t(uint16_t)> read, 
                   std::function<void(uint16_t, uint8_t)> write, 
                   int priority = 0) {
@@ -57,7 +57,7 @@ public:
     auto write32 = [write](uint32_t addr, uint8_t val) { 
       write(static_cast<uint16_t>(addr), val); 
     };
-    mapRegion(base, size, read32, write32, priority);
+    mapRegion(start, end, read32, write32, priority);
   }
 
   // Read from the bus (all address widths)

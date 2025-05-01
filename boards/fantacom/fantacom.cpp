@@ -32,15 +32,15 @@ void FantacomBoard::setup(const ArgumentParser &args) {
 
   // Set up physical memory layout
   phys.mapRegion(
-      0, 256 * KIB, [this](uint32_t address) -> uint8_t { return rom[address]; },
+      0x00000, 0x3ffff, [this](uint32_t address) -> uint8_t { return rom[address]; },
       [this](uint32_t address, uint8_t value) {}, 0);
 
   phys.mapRegion(
-      256 * KIB, 256 * KIB, [this](uint32_t address) -> uint8_t { return gfx.vram[address]; },
+      0x40000, 0x7ffff, [this](uint32_t address) -> uint8_t { return gfx.vram[address]; },
       [this](uint32_t address, uint8_t value) { gfx.vram[address] = value; }, 0);
 
   phys.mapRegion(
-      512 * KIB, 512 * KIB,
+      0x80000, 0xfffff,
       [this](uint32_t address) -> uint8_t {
         if (address < ram.size())
           return ram[address];
@@ -55,12 +55,12 @@ void FantacomBoard::setup(const ArgumentParser &args) {
 
   // Virtual memory just goes through MMU
   virt.mapRegion16(
-      0, 64 * KIB, [this](uint16_t address) -> uint8_t { return read(address); },
+      0, 0xffff, [this](uint16_t address) -> uint8_t { return read(address); },
       [this](uint16_t address, uint8_t value) { write(address, value); }, 0);
 
   // Set up I/O ports
   io.mapRegion8(
-      0, 16, [this](uint8_t address) -> uint8_t { return mmu_config[address]; },
+      0, 0x0f, [this](uint8_t address) -> uint8_t { return mmu_config[address]; },
       [this](uint8_t address, uint8_t value) { mmu_config[address] = value; }, 0);
 }
 
