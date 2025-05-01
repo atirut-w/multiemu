@@ -78,6 +78,9 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
   for (auto& row : keyboard) {
     row.fill(true);
   }
+  
+  // Initialize interrupt counter
+  interrupt_cycles = 0;
 
   // Reset the CPU
   z80.reset();
@@ -160,8 +163,23 @@ int Spectrum48K::run(int cycles) {
   handle_keypress(7, 4, !IsKeyDown(KEY_B));          // B
   
   // Execute CPU cycles
+  int executed_cycles = 0;
   try {
-    return z80.execute(cycles);
+    executed_cycles = z80.execute(cycles);
+    
+    // Update interrupt counter
+    interrupt_cycles += executed_cycles;
+    
+    // Check if it's time for an interrupt (50Hz)
+    if (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
+      // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
+      z80.requestInterrupt();
+      
+      // Reset counter (keeping remainder for accurate timing)
+      interrupt_cycles -= CYCLES_PER_INTERRUPT;
+    }
+    
+    return executed_cycles;
   } catch (const std::exception &e) {
     std::cerr << "CPU execution error: " << e.what() << std::endl;
     return -1;
