@@ -11,22 +11,22 @@
 #include <stdexcept>
 
 static std::array<Color, 16> palette = {
-    Color{0, 0, 0, 255},      // Black
-    Color{1, 0, 206, 255},    // Blue
-    Color{207, 1, 0, 255},    // Red
-    Color{207, 1, 206, 255},  // Magenta
-    Color{0, 207, 21, 255},   // Green
-    Color{1, 207, 207, 255},  // Cyan
-    Color{207, 207, 21, 255}, // Yellow
-    Color{207, 207, 207, 255},// White
-    Color{0, 0, 0, 255},      // Bright Black
-    Color{2, 0, 253, 255},    // Bright Blue
-    Color{255, 2, 1, 255},    // Bright Red
-    Color{255, 2, 253, 255},  // Bright Magenta
-    Color{0, 255, 28, 255},   // Bright Green
-    Color{2, 255, 255, 255},  // Bright Cyan
-    Color{255, 241, 29, 255}, // Bright Yellow
-    Color{255, 255, 255, 255} // Bright White
+    Color{0, 0, 0, 255},       // Black
+    Color{1, 0, 206, 255},     // Blue
+    Color{207, 1, 0, 255},     // Red
+    Color{207, 1, 206, 255},   // Magenta
+    Color{0, 207, 21, 255},    // Green
+    Color{1, 207, 207, 255},   // Cyan
+    Color{207, 207, 21, 255},  // Yellow
+    Color{207, 207, 207, 255}, // White
+    Color{0, 0, 0, 255},       // Bright Black
+    Color{2, 0, 253, 255},     // Bright Blue
+    Color{255, 2, 1, 255},     // Bright Red
+    Color{255, 2, 253, 255},   // Bright Magenta
+    Color{0, 255, 28, 255},    // Bright Green
+    Color{2, 255, 255, 255},   // Bright Cyan
+    Color{255, 241, 29, 255},  // Bright Yellow
+    Color{255, 255, 255, 255}  // Bright White
 };
 
 namespace MultiEmu {
@@ -67,18 +67,17 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
 
   memory_bus.mapRegion16(
       0x4000, 0xffff, // 48K RAM (0x4000-0xFFFF)
-      [this](uint16_t addr) -> uint8_t { return ram[addr]; }, 
-      [this](uint16_t addr, uint8_t val) { ram[addr] = val; },
+      [this](uint16_t addr) -> uint8_t { return ram[addr]; }, [this](uint16_t addr, uint8_t val) { ram[addr] = val; },
       0);
 
   // Initialize RAM to 0
   std::fill(ram.begin(), ram.end(), 0);
-  
+
   // Initialize all keyboard keys as released (true = released)
-  for (auto& row : keyboard) {
+  for (auto &row : keyboard) {
     row.fill(true);
   }
-  
+
   // Initialize interrupt counter
   interrupt_cycles = 0;
 
@@ -104,81 +103,81 @@ int Spectrum48K::run(int cycles) {
   // 5: P, O, I, U, Y
   // 6: ENTER, L, K, J, H
   // 7: SPACE, SYMBOL SHIFT, M, N, B
-  
+
   // Map PC keyboard to ZX Spectrum keyboard matrix
   // Row 0
-  handle_keypress(0, 0, !IsKeyDown(KEY_LEFT_SHIFT));  // CAPS SHIFT
+  handle_keypress(0, 0, !IsKeyDown(KEY_LEFT_SHIFT)); // CAPS SHIFT
   handle_keypress(0, 1, !IsKeyDown(KEY_Z));          // Z
   handle_keypress(0, 2, !IsKeyDown(KEY_X));          // X
   handle_keypress(0, 3, !IsKeyDown(KEY_C));          // C
   handle_keypress(0, 4, !IsKeyDown(KEY_V));          // V
-  
+
   // Row 1
-  handle_keypress(1, 0, !IsKeyDown(KEY_A));          // A
-  handle_keypress(1, 1, !IsKeyDown(KEY_S));          // S
-  handle_keypress(1, 2, !IsKeyDown(KEY_D));          // D
-  handle_keypress(1, 3, !IsKeyDown(KEY_F));          // F
-  handle_keypress(1, 4, !IsKeyDown(KEY_G));          // G
-  
+  handle_keypress(1, 0, !IsKeyDown(KEY_A)); // A
+  handle_keypress(1, 1, !IsKeyDown(KEY_S)); // S
+  handle_keypress(1, 2, !IsKeyDown(KEY_D)); // D
+  handle_keypress(1, 3, !IsKeyDown(KEY_F)); // F
+  handle_keypress(1, 4, !IsKeyDown(KEY_G)); // G
+
   // Row 2
-  handle_keypress(2, 0, !IsKeyDown(KEY_Q));          // Q
-  handle_keypress(2, 1, !IsKeyDown(KEY_W));          // W
-  handle_keypress(2, 2, !IsKeyDown(KEY_E));          // E
-  handle_keypress(2, 3, !IsKeyDown(KEY_R));          // R
-  handle_keypress(2, 4, !IsKeyDown(KEY_T));          // T
-  
+  handle_keypress(2, 0, !IsKeyDown(KEY_Q)); // Q
+  handle_keypress(2, 1, !IsKeyDown(KEY_W)); // W
+  handle_keypress(2, 2, !IsKeyDown(KEY_E)); // E
+  handle_keypress(2, 3, !IsKeyDown(KEY_R)); // R
+  handle_keypress(2, 4, !IsKeyDown(KEY_T)); // T
+
   // Row 3
-  handle_keypress(3, 0, !IsKeyDown(KEY_ONE));        // 1
-  handle_keypress(3, 1, !IsKeyDown(KEY_TWO));        // 2
-  handle_keypress(3, 2, !IsKeyDown(KEY_THREE));      // 3
-  handle_keypress(3, 3, !IsKeyDown(KEY_FOUR));       // 4
-  handle_keypress(3, 4, !IsKeyDown(KEY_FIVE));       // 5
-  
+  handle_keypress(3, 0, !IsKeyDown(KEY_ONE));   // 1
+  handle_keypress(3, 1, !IsKeyDown(KEY_TWO));   // 2
+  handle_keypress(3, 2, !IsKeyDown(KEY_THREE)); // 3
+  handle_keypress(3, 3, !IsKeyDown(KEY_FOUR));  // 4
+  handle_keypress(3, 4, !IsKeyDown(KEY_FIVE));  // 5
+
   // Row 4
-  handle_keypress(4, 0, !IsKeyDown(KEY_ZERO));       // 0
-  handle_keypress(4, 1, !IsKeyDown(KEY_NINE));       // 9
-  handle_keypress(4, 2, !IsKeyDown(KEY_EIGHT));      // 8
-  handle_keypress(4, 3, !IsKeyDown(KEY_SEVEN));      // 7
-  handle_keypress(4, 4, !IsKeyDown(KEY_SIX));        // 6
-  
+  handle_keypress(4, 0, !IsKeyDown(KEY_ZERO));  // 0
+  handle_keypress(4, 1, !IsKeyDown(KEY_NINE));  // 9
+  handle_keypress(4, 2, !IsKeyDown(KEY_EIGHT)); // 8
+  handle_keypress(4, 3, !IsKeyDown(KEY_SEVEN)); // 7
+  handle_keypress(4, 4, !IsKeyDown(KEY_SIX));   // 6
+
   // Row 5
-  handle_keypress(5, 0, !IsKeyDown(KEY_P));          // P
-  handle_keypress(5, 1, !IsKeyDown(KEY_O));          // O
-  handle_keypress(5, 2, !IsKeyDown(KEY_I));          // I
-  handle_keypress(5, 3, !IsKeyDown(KEY_U));          // U
-  handle_keypress(5, 4, !IsKeyDown(KEY_Y));          // Y
-  
+  handle_keypress(5, 0, !IsKeyDown(KEY_P)); // P
+  handle_keypress(5, 1, !IsKeyDown(KEY_O)); // O
+  handle_keypress(5, 2, !IsKeyDown(KEY_I)); // I
+  handle_keypress(5, 3, !IsKeyDown(KEY_U)); // U
+  handle_keypress(5, 4, !IsKeyDown(KEY_Y)); // Y
+
   // Row 6
-  handle_keypress(6, 0, !IsKeyDown(KEY_ENTER));      // ENTER
-  handle_keypress(6, 1, !IsKeyDown(KEY_L));          // L
-  handle_keypress(6, 2, !IsKeyDown(KEY_K));          // K
-  handle_keypress(6, 3, !IsKeyDown(KEY_J));          // J
-  handle_keypress(6, 4, !IsKeyDown(KEY_H));          // H
-  
+  handle_keypress(6, 0, !IsKeyDown(KEY_ENTER)); // ENTER
+  handle_keypress(6, 1, !IsKeyDown(KEY_L));     // L
+  handle_keypress(6, 2, !IsKeyDown(KEY_K));     // K
+  handle_keypress(6, 3, !IsKeyDown(KEY_J));     // J
+  handle_keypress(6, 4, !IsKeyDown(KEY_H));     // H
+
   // Row 7
-  handle_keypress(7, 0, !IsKeyDown(KEY_SPACE));      // SPACE
+  handle_keypress(7, 0, !IsKeyDown(KEY_SPACE));       // SPACE
   handle_keypress(7, 1, !IsKeyDown(KEY_RIGHT_SHIFT)); // SYMBOL SHIFT
-  handle_keypress(7, 2, !IsKeyDown(KEY_M));          // M
-  handle_keypress(7, 3, !IsKeyDown(KEY_N));          // N
-  handle_keypress(7, 4, !IsKeyDown(KEY_B));          // B
-  
+  handle_keypress(7, 2, !IsKeyDown(KEY_M));           // M
+  handle_keypress(7, 3, !IsKeyDown(KEY_N));           // N
+  handle_keypress(7, 4, !IsKeyDown(KEY_B));           // B
+
   // Execute CPU cycles
   int executed_cycles = 0;
   try {
     executed_cycles = z80.execute(cycles);
-    
+
     // Update interrupt counter
     interrupt_cycles += executed_cycles;
-    
+
     // Check if it's time for an interrupt (50Hz)
     if (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
       // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
       z80.requestInterrupt();
-      
+
       // Reset counter (keeping remainder for accurate timing)
       interrupt_cycles -= CYCLES_PER_INTERRUPT;
     }
-    
+
     return executed_cycles;
   } catch (const std::exception &e) {
     std::cerr << "CPU execution error: " << e.what() << std::endl;
@@ -200,18 +199,18 @@ uint8_t Spectrum48K::read_port(uint16_t port) {
   // 0xDFFE (11011111 11111110) - Row 5: P, O, I, U, Y
   // 0xBFFE (10111111 11111110) - Row 6: ENTER, L, K, J, H
   // 0x7FFE (01111111 11111110) - Row 7: SPACE, SYMBOL SHIFT, M, N, B
-  
+
   // Check if the low byte is 0xFE (all keyboard ports end with FE)
   if ((port & 0x00FF) == 0xFE) {
     uint8_t result = 0xFF; // Initialize all bits to 1
-    
+
     // In the ZX Spectrum, bits 5-7 of the result should be 1
     // However, we're only using bits 0-4 for the keys, so no need to explicitly set them
-    
+
     // The high byte of the port address selects the keyboard half-row
     // A half-row is selected when its bit in the high byte is LOW (0)
     uint8_t high_byte = (port >> 8) & 0xFF;
-    
+
     // Check each row
     for (int row = 0; row < 8; row++) {
       // If this row is selected (bit is 0 in the high byte)
@@ -227,10 +226,10 @@ uint8_t Spectrum48K::read_port(uint16_t port) {
         break;
       }
     }
-    
+
     return result;
   }
-  
+
   // Default for unhandled ports
   return 0xFF;
 }
