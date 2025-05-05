@@ -174,6 +174,12 @@ int Spectrum48K::run(int cycles) {
       // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
       z80.requestInterrupt();
 
+      // Update flash counter (toggle every ~16 frames for 1.5Hz at 50Hz refresh)
+      flash_counter = (flash_counter + 1) % 16;
+      if (flash_counter == 0) {
+        flash_state = !flash_state;
+      }
+
       // Reset counter (keeping remainder for accurate timing)
       interrupt_cycles -= CYCLES_PER_INTERRUPT;
     }
@@ -260,7 +266,14 @@ void Spectrum48K::draw() {
       Color paperColor = palette[paper + (bright ? 8 : 0)];
       for (int bit = 0; bit < 8; ++bit) {
         uint8_t color = (pixelByte >> (7 - bit)) & 1;
-        Color pixelColor = (color == 1) ? inkColor : paperColor;
+        Color pixelColor;
+        
+        // If flash bit is set and we're in the flash state, swap ink and paper colors
+        if (flash && flash_state) {
+          pixelColor = (color == 1) ? paperColor : inkColor;
+        } else {
+          pixelColor = (color == 1) ? inkColor : paperColor;
+        }
 
         // Draw the pixel
         ImageDrawPixel(&frame, byte * 8 + bit, line, pixelColor);
