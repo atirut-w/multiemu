@@ -19,7 +19,6 @@ public:
   void setup(const argparse::ArgumentParser &args) override;
   int run(int cycles) override;
   void draw() override;
-  void vblank() override;
   std::vector<BusInfo> get_buses() const override;
   CPU *getCPU() override { return &z80; }
 
@@ -36,6 +35,10 @@ private:
   // Keyboard state - 8 half-rows with 5 keys each
   // False = key pressed, True = key released
   std::array<std::array<bool, 5>, 8> keyboard;
+
+  // Interrupt timing
+  int interrupt_cycles;                              // Cycles elapsed since last interrupt
+  static constexpr int CYCLES_PER_INTERRUPT = 69888; // ~50Hz (3.5MHz / 50Hz)
 
   // FLASH attribute state
   bool flash_state = false;                          // Current flash state (false = normal, true = inverted)
