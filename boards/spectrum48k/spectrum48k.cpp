@@ -48,6 +48,9 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
   // Set clock speed (3.5MHz for ZX Spectrum)
   clock_speed = 3500000;
   display = true;
+  
+  // Set target FPS to 50Hz (PAL refresh rate for ZX Spectrum)
+  SetTargetFPS(50);
 
   // Load ROM
   try {
@@ -77,9 +80,6 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
   for (auto &row : keyboard) {
     row.fill(true);
   }
-
-  // Initialize interrupt counter
-  interrupt_cycles = 0;
 
   // Reset the CPU
   z80.reset();
@@ -164,27 +164,7 @@ int Spectrum48K::run(int cycles) {
   // Execute CPU cycles
   int executed_cycles = 0;
   try {
-    executed_cycles = z80.execute(cycles);
-
-    // Update interrupt counter
-    interrupt_cycles += executed_cycles;
-
-    // Check if it's time for an interrupt (50Hz)
-    if (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
-      // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
-      z80.requestInterrupt();
-
-      // Update flash counter (toggle every ~16 frames for 1.5Hz at 50Hz refresh)
-      flash_counter = (flash_counter + 1) % 16;
-      if (flash_counter == 0) {
-        flash_state = !flash_state;
-      }
-
-      // Reset counter (keeping remainder for accurate timing)
-      interrupt_cycles -= CYCLES_PER_INTERRUPT;
-    }
-
-    return executed_cycles;
+    return z80.execute(cycles);
   } catch (const std::exception &e) {
     std::cerr << "CPU execution error: " << e.what() << std::endl;
     return -1;
@@ -300,6 +280,17 @@ std::vector<BusInfo> Spectrum48K::get_buses() const {
   buses.push_back(memBus);
 
   return buses;
+}
+
+void Spectrum48K::vblank() {
+  // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
+  z80.requestInterrupt();
+
+  // Update flash counter (toggle every ~16 frames for 1.5Hz at 50Hz refresh)
+  flash_counter = (flash_counter + 1) % 16;
+  if (flash_counter == 0) {
+    flash_state = !flash_state;
+  }
 }
 
 } // namespace MultiEmu

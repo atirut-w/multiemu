@@ -148,6 +148,9 @@ int main(int argc, const char *argv[]) {
     if (board->display) {
       board->draw();
     }
+    
+    // Call vblank at the end of each frame
+    board->vblank();
 
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "MultiEmu - %.2f MHz - %d cycles - %d FPS", board->clock_speed / 1e6, cycles_ran,

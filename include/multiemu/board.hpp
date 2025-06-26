@@ -43,11 +43,17 @@ public:
    * @return The actual number of cycles that were run
    */
   virtual int run(int cycles) = 0;
-  
   /**
    * Draw graphics to the screen (no-op by default)
    */
   virtual void draw() {}
+  
+  /**
+   * Called at the end of each frame (vertical blanking interval)
+   * Boards can implement this to handle frame-synchronized events like interrupts
+   */
+  virtual void vblank() {}
+  
   
   /**
    * Get information about buses available for debugging
