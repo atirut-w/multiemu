@@ -42,7 +42,7 @@ static bool MemoryHighlightFn(const ImU8* mem, size_t addr, void* user_data) {
 DebuggerWindow::DebuggerWindow(Board* board, bool initialPauseState) 
     : board(board), cpuPaused(initialPauseState) {
   title = "Debugger";
-  open = true;
+  open = false;
   flags = 0;
   
   // Initialize memory editor
