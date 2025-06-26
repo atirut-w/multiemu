@@ -12,6 +12,9 @@ private:
 
 public:
   Z80();
+  
+  ReadCallback in = [](size_t) { return 0; };
+  WriteCallback out = [](size_t, uint8_t) {};
 
   // Core execution
   virtual int execute(int cycles) override;
