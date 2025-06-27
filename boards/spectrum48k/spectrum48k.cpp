@@ -161,27 +161,27 @@ int Spectrum48K::run(int cycles) {
   handle_keypress(7, 3, !IsKeyDown(KEY_N));           // N
   handle_keypress(7, 4, !IsKeyDown(KEY_B));           // B
 
-  // Execute CPU cycles
-  int executed_cycles = 0;
   try {
-    executed_cycles = z80.execute(cycles);
+    int executed_cycles = 0;
+    while (executed_cycles < cycles) {
+      int step = z80.execute(1);
+      executed_cycles += step;
+      interrupt_cycles += step;
 
-    // Update interrupt counter
-    interrupt_cycles += executed_cycles;
+      while (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
+        // Generate interrupt
+        z80.requestInterrupt();
 
-    // Check if it's time for an interrupt (50Hz)
-    if (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
-      // Generate interrupt (ZX Spectrum uses maskable interrupts with no specific vector)
-      z80.requestInterrupt();
+        // Update flash state
+        flash_counter = (flash_counter + 1) % 16;
+        if (flash_counter == 0) {
+          flash_state = !flash_state;
+        }
 
-      // Update flash counter (toggle every ~16 frames for 1.5Hz at 50Hz refresh)
-      flash_counter = (flash_counter + 1) % 16;
-      if (flash_counter == 0) {
-        flash_state = !flash_state;
+        // Reset interrupt counter
+        interrupt_cycles -= CYCLES_PER_INTERRUPT;
+        std::cout << "Int cycle: " << interrupt_cycles << std::endl;
       }
-
-      // Reset counter (keeping remainder for accurate timing)
-      interrupt_cycles -= CYCLES_PER_INTERRUPT;
     }
 
     return executed_cycles;
