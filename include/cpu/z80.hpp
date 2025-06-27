@@ -17,7 +17,7 @@ public:
   WriteCallback out = [](size_t, uint8_t) {};
 
   // Core execution
-  virtual int execute(int cycles) override;
+  virtual int run(int cycles) override;
   virtual void reset() override;
 
   // Debugging capability and metadata

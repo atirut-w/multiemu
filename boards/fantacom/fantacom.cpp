@@ -66,7 +66,7 @@ void FantacomBoard::setup(const ArgumentParser &args) {
 
 int FantacomBoard::run(int cycles) {
   try {
-    return z80.execute(cycles);
+    return z80.run(cycles);
   } catch (const runtime_error &e) {
     cerr << "Error in CPU: " << e.what() << endl;
     return -1;

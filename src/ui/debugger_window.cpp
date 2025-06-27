@@ -98,7 +98,7 @@ void DebuggerWindow::renderControlButtons() {
     cpuPaused = false;
     
     // Execute a single instruction
-    board->getCPU()->execute(1);
+    board->getCPU()->run(1);
     
     // Restore paused state (usually keeping it paused)
     cpuPaused = wasPaused || true;

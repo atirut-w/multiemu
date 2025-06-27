@@ -1,4 +1,5 @@
 #pragma once
+#include "multiemu/device.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -34,7 +35,7 @@ struct DebuggerCapabilities {
   std::string statusRegisterName;
 };
 
-class CPU {
+class CPU : public Device {
 public:
   using ReadCallback = std::function<uint8_t(size_t)>;
   using WriteCallback = std::function<void(size_t, uint8_t)>;
@@ -45,7 +46,7 @@ public:
   virtual ~CPU() = default;
 
   // Core execution
-  virtual int execute(int cycles) = 0;
+  virtual int run(int cycles) = 0;
   virtual void reset() = 0;
   
   // Register/debugging metadata

@@ -67,7 +67,7 @@ std::vector<FlagDefinition> Z80::getFlagDefinitions() const {
 }
 
 // Core execution methods
-int Z80::execute(int cycles) {
+int Z80::run(int cycles) {
   for (int i = 0; i < cycles; i++) {
     pins = z80_tick(&cpu, pins);
 

@@ -164,7 +164,7 @@ int Spectrum48K::run(int cycles) {
   // Execute CPU cycles
   int executed_cycles = 0;
   try {
-    return z80.execute(cycles);
+    return z80.run(cycles);
   } catch (const std::exception &e) {
     std::cerr << "CPU execution error: " << e.what() << std::endl;
     return -1;
