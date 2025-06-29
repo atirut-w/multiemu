@@ -3,6 +3,7 @@
 #include "multiemu/board.hpp"
 #include "multiemu/bus.hpp"
 #include "multiemu/cpu.hpp"
+#include "multiemu/scheduler.hpp"
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -27,6 +28,7 @@ private:
   Z80 z80;
   Bus memory_bus;
   Bus io_bus;
+  Scheduler scheduler;
 
   // Memory
   std::vector<uint8_t> rom;           // 16KB ROM
@@ -38,11 +40,10 @@ private:
 
   // Interrupt timing
   int interrupt_cycles;                              // Cycles elapsed since last interrupt
-  static constexpr int CYCLES_PER_INTERRUPT = 69888; // ~50Hz (3.5MHz / 50Hz)
 
   // FLASH attribute state
-  bool flash_state = false;                          // Current flash state (false = normal, true = inverted)
-  int flash_counter = 0;                             // Counter for flash timing
+  bool flash_state = false; // Current flash state (false = normal, true = inverted)
+  int flash_counter = 0;    // Counter for flash timing
 
   // Memory access
   uint8_t read_memory(uint16_t address);

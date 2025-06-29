@@ -78,8 +78,23 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
     row.fill(true);
   }
 
-  // Initialize interrupt counter
-  interrupt_cycles = 0;
+  // CPU execution
+  scheduler.schedule([this](int cycles) { return z80.execute(cycles); }, 3500000);
+  // 50Hz interrupt
+  scheduler.schedule([this](int cycles) {
+    z80.requestInterrupt();
+    return cycles;
+  }, 50);
+  // Cursor flash every 16 frames
+  scheduler.schedule([this](int cycles) {
+    flash_counter++;
+    if (flash_counter >= 16) {
+      flash_state = !flash_state; // Toggle flash state
+      flash_counter = 0; // Reset counter after 16 frames
+    }
+    return cycles;
+  }, 50);
+
 
   // Reset the CPU
   z80.reset();
@@ -162,31 +177,9 @@ int Spectrum48K::run(int cycles) {
   handle_keypress(7, 4, !IsKeyDown(KEY_B));           // B
 
   try {
-    int executed_cycles = 0;
-    while (executed_cycles < cycles) {
-      int step = z80.execute(1);
-      executed_cycles += step;
-      interrupt_cycles += step;
-
-      while (interrupt_cycles >= CYCLES_PER_INTERRUPT) {
-        // Generate interrupt
-        z80.requestInterrupt();
-
-        // Update flash state
-        flash_counter = (flash_counter + 1) % 16;
-        if (flash_counter == 0) {
-          flash_state = !flash_state;
-        }
-
-        // Reset interrupt counter
-        interrupt_cycles -= CYCLES_PER_INTERRUPT;
-        std::cout << "Int cycle: " << interrupt_cycles << std::endl;
-      }
-    }
-
-    return executed_cycles;
+    return scheduler.run(cycles);
   } catch (const std::exception &e) {
-    std::cerr << "CPU execution error: " << e.what() << std::endl;
+    std::cerr << "Scheduler execution error: " << e.what() << std::endl;
     return -1;
   }
 }
@@ -267,7 +260,7 @@ void Spectrum48K::draw() {
       for (int bit = 0; bit < 8; ++bit) {
         uint8_t color = (pixelByte >> (7 - bit)) & 1;
         Color pixelColor;
-        
+
         // If flash bit is set and we're in the flash state, swap ink and paper colors
         if (flash && flash_state) {
           pixelColor = (color == 1) ? paperColor : inkColor;
