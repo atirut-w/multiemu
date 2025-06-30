@@ -79,12 +79,12 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
   }
 
   // CPU execution
-  scheduler.schedule([this](int cycles) { return z80.execute(cycles); }, 3500000);
+  scheduler.schedule([this](int cycles) { return z80.execute(cycles); }, 1);
   // 50Hz interrupt
   scheduler.schedule([this](int cycles) {
     z80.requestInterrupt();
     return cycles;
-  }, 50);
+  }, 70000);
   // Cursor flash every 16 frames
   scheduler.schedule([this](int cycles) {
     flash_counter++;
@@ -93,8 +93,7 @@ void Spectrum48K::setup(const argparse::ArgumentParser &args) {
       flash_counter = 0; // Reset counter after 16 frames
     }
     return cycles;
-  }, 50);
-
+  }, 70000);
 
   // Reset the CPU
   z80.reset();
